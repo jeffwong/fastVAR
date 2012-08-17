@@ -1,0 +1,19 @@
+Package: fastVAR
+Type: Package
+Title: fastVAR
+Version: 1.2.1
+Date: 2012-02-18
+Author: Jeffrey Wong
+Maintainer: <jeff.ct.wong@stanford.edu>
+Description: This package is designed for time series data.
+  Fits Vector Autoregressive models and Vector Autoregressive models
+  with Exogenous Inputs.  For speedup, fastVAR can use multiple cpu cores 
+  to calculate the estimates.  For very large systems,
+  fastVAR uses Lasso penalty to return very sparse coefficient matrices. 
+  Regression diagnostics can be used to compare models, and prediction functions 
+  can be used to calculate the n-step ahead prediction.  Faster implementations
+  in C coming soon.
+License: GPL
+LazyLoad: yes
+Depends: glmnet
+Suggests: multicore
