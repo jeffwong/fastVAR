@@ -149,8 +149,8 @@ VARZ = function(y, p) {
     T=nrow(y.p),
     k=k,
     dof=dof,
-    y.p=y.p,
-    Z=Z
+    y.p=as.matrix(y.p),
+    Z=as.matrix(Z)
   ))
 }
 

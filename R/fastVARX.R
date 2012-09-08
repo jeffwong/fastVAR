@@ -183,7 +183,7 @@ VARXZ = function(y, x, p, b) {
     k=k,
     p.max=p.max,
     dof=dof,
-    y.p=y.p,
-    Z=Z
+    y.p=as.matrix(y.p),
+    Z=as.matrix(Z)
   ))
 }
