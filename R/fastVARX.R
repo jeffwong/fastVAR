@@ -13,7 +13,7 @@ VARX = function(y, x, p, b, getdiag=T) {
     return ( structure ( list (
       model = model,
       varx.z = varx.z,
-      diag = VARdiag(varx.z$y.p, varx.z$Z, model$coefficients,
+      diag = VAR.diag(varx.z$y.p, varx.z$Z, model$coefficients,
         varx.z$ny, varx.z$T, (varx.z$k+1), varx.z$p.max, varx.z$dof)
     ), class="fastVAR.VARX"))
   } else {

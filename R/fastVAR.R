@@ -20,7 +20,7 @@ VAR = function(y, p=1, getdiag=T) {
     return ( structure ( list (
       model = model,
       var.z = var.z,
-      diag = VARdiag(var.z$y.p, var.z$Z, model$coefficients,
+      diag = VAR.diag(var.z$y.p, var.z$Z, model$coefficients,
         var.z$n, var.z$T, (var.z$k+1), p, var.z$dof)
     ), class="fastVAR.VAR"))
   } else {
@@ -52,10 +52,20 @@ predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold) {
   return (y.pred)
 }
 
+#' Inverse Covariance Matrix
+#'
+#' Computes the inverse of the covariance matrix
+#' @param Z the design matrix
+.inverseCovariance = function(Z) {
+    Z.centered = scale(Z)
+    Z.centered.svd = svd(Z.centered.svd)
+    Z.centered.svd$v %*% diag(1/Z.centered.svd$d^2) %*% t(Z.centered.svd$v)
+}
+
 VAR.diag = function(y.p, Z, B, n, T, k, p, dof) {
   Z = cbind(1, Z)
   colnames(Z)[1] = 'intercept'
-  ZTZ.inv = solve(t(Z) %*% Z)
+  ZTZ.inv = .inverseCovariance(Z)
   residual = y.p - Z %*% B
   residual.cov = t(residual) %*% residual  #residual covariance matrix
   sigma.hat = (1 / (T - k)) * 
