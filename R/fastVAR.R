@@ -5,8 +5,13 @@
 #' @param y A matrix where each column represents an individual time series
 #' @param p the number of lags to include in the design matrix
 #' @param getdiag logical.  If true, return diagnostics
+#' @param weights weights applied to the multiresponse linear regression.
+#'   Better predictions might come from weighting observations far in the past
+#'   less so they impact the objective value less.
+#' @param l2penalty a ridge regression penalty, useful when the design matrix is 
+#'   very wide, which may happen if p is large.
 #' @export
-VAR = function(y, p=1, getdiag=T) {
+VAR = function(y, p=1, weights=NULL, l2penalty=NULL, getdiag=T) {
   if(p < 1) {
     stop("p must be a positive integer")
   }
@@ -29,6 +34,16 @@ VAR = function(y, p=1, getdiag=T) {
                 var.z = var.z
     ), class="fastVAR.VAR"))
   }
+}
+
+#' Exponential Weights
+#' 
+#' Weights that decay exponentially.  Values in the past receive smaller weights
+#' @param x
+#' @param y
+#' @export
+exponentialWeights = function(x, y) {
+
 }
 
 predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold) {
@@ -55,11 +70,15 @@ predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold) {
 #' Inverse Covariance Matrix
 #'
 #' Computes the inverse of the covariance matrix
+#' using an svd
 #' @param Z the design matrix
 .inverseCovariance = function(Z) {
     Z.centered = scale(Z)
     Z.centered.svd = svd(Z.centered.svd)
-    Z.centered.svd$v %*% diag(1/Z.centered.svd$d^2) %*% t(Z.centered.svd$v)
+    d2.inv.1 = 1/(Z.centered.svd$d[which(Z.centered.svd$d != 0)])^2
+    d2.inv.2 = rep(0, length(which(Z.centered.svd$d == 0)))
+    if(length(d2.inv.2) > 0) warning("Warning, covariance matrix not invertible.  Setting the inverse of the singular values to 0")
+    Z.centered.svd$v %*% diag(c(d2.inv.1, d2.inv.2)) %*% t(Z.centered.svd$v)
 }
 
 VAR.diag = function(y.p, Z, B, n, T, k, p, dof) {
