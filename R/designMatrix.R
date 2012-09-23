@@ -1,4 +1,4 @@
-VAR.Z = function(y, p) {
+VAR.Z = function(y, p, intercept=F) {
   if(p < 1) stop("p must be a positive integer")
       
   if(is.null(colnames(y))) {
@@ -7,14 +7,15 @@ VAR.Z = function(y, p) {
     })
   }
 
-  n = ncol(y)
-  T = nrow(y)
-  k = n*p
+  n = ncol(y) #numcols in response
+  T = nrow(y) #numrows in response
+  k = n*p     #numcols in design matrix
+  if(intercept) k = k+1
   dof = T - p - k
         
   y.p = y[(1+p):T,]
-  Z = do.call('cbind', (sapply(0:(p-1), function(k) {
-    y[(p-k):(T-1-k),]
+  Z = do.call('cbind', (sapply(0:(p-1), function(i) {
+    y[(p-i):(T-1-i),]
   }, simplify=F)))
   Z.names = colnames(Z)
   colnames(Z) = sapply(1:p, function(i) {
@@ -22,6 +23,11 @@ VAR.Z = function(y, p) {
     endIndex = i*n
     paste(Z.names[startIndex:endIndex], '.l', i, sep='')
   })
+
+  if(intercept) {
+    Z = cbind(1, Z)
+    colnames(Z) = c("intercept", colnames(Z))
+  }
 
   return ( structure ( list (
     n=n,
@@ -31,13 +37,14 @@ VAR.Z = function(y, p) {
     y.p=as.matrix(y.p),
     Z=as.matrix(Z),
     y.orig=y,
-    p = p
+    p = p,
+    intercept = intercept
   ), class="fastVAR.VARZ"))
 }
 
 
 
-VARX.Z = function(y, x, p, b) {
+VARX.Z = function(y, x, p, b, intercept=F) {
   if(p < 1) stop("p must be a positive integer")
   if(is.null(colnames(y))) {
     colnames(y) = sapply(1:ncol(y), function(j) {
@@ -54,12 +61,13 @@ VARX.Z = function(y, x, p, b) {
   nx = ncol(x)
   T = nrow(y)
   k = ny*p + nx*b
+  if(intercept) k = k+1
   p.max = max(p,b)
   dof = T - p.max - k
 
   y.p = y[(1+p.max):T,]
-  Z.p = do.call('cbind', (sapply(0:(p-1), function(k) {
-    y[(p.max-k):(T-1-k),]
+  Z.p = do.call('cbind', (sapply(0:(p-1), function(i) {
+    y[(p.max-i):(T-1-i),]
   }, simplify=F)))
   Z.p.names = colnames(Z.p)
   colnames(Z.p) = sapply(1:p, function(i) {
@@ -81,6 +89,10 @@ VARX.Z = function(y, x, p, b) {
     })
   }
   Z = cbind(Z.p, Z.b)
+  if(intercept) {
+      Z = cbind(1, Z)
+      colnames(Z) = c("intercept", colnames(Z))
+  }
 
   return ( structure ( list (
     ny=ny,
@@ -94,6 +106,7 @@ VARX.Z = function(y, x, p, b) {
     y.orig = y,
     x.orig = x,
     p = p,
-    b = b
+    b = b,
+    intercept = intercept
   ), class="fastVAR.VARXZ"))
 }

@@ -54,9 +54,9 @@ SparseVARX = function(y, x, p, b, lambda=NULL,
   if(!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
-  varx.z = VARX.Z(y,x,p,b)
-  Z = varx.z$Z
-  y.augmented = rbind(1:ncol(y),varx.z$y.p)
+  var.z = VARX.Z(y,x,p,b)
+  Z = var.z$Z
+  y.augmented = rbind(1:ncol(y),var.z$y.p)
   
   if(numcore==1 | !require(multicore)) {
     var.lasso = apply(y.augmented, 2, .sparseVARX, y=y,x=x,p=p,b=b,
@@ -65,31 +65,31 @@ SparseVARX = function(y, x, p, b, lambda=NULL,
     y.augmented.list = c(unname(as.data.frame(y.augmented)))
     var.lasso = mclapply(y.augmented.list, .sparseVARX, y=y,x=x,p=p,b=b,
       lambda=lambda, Z=Z, y.spec=y.spec, x.spec=x.spec, mc.cores=numcore, ...)
-    var.lasso = matrix(unlist(var.lasso), nrow=(varx.z$k+1), ncol=ncol(y))
+    var.lasso = matrix(unlist(var.lasso), nrow=(var.z$k+1), ncol=ncol(y))
     colnames(var.lasso) = colnames(y)
   }
   rownames(var.lasso) = c('intercept', colnames(Z))
 
   return(structure (list(
               coef = var.lasso,
-              varx.z = varx.z 
+              var.z = var.z 
   ), class="fastVAR.SparseVARX"))
 }
 
 predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold) {
-  y.pred = matrix(nrow=n.ahead, ncol=ncol(SparseVARX$varx.z$y.orig))
-  colnames(y.pred) = colnames(SparseVARX$varx.z$y.orig)
+  y.pred = matrix(nrow=n.ahead, ncol=ncol(SparseVARX$var.z$y.orig))
+  colnames(y.pred) = colnames(SparseVARX$var.z$y.orig)
   for(i in 1:n.ahead) {
-    Z.ahead.y = as.vector(t(SparseVARX$varx.z$y.orig[
-      ((nrow(SparseVARX$varx.z$y.orig)):
-      (nrow(SparseVARX$varx.z$y.orig)-SparseVARX$varx.z$p+1))
+    Z.ahead.y = as.vector(t(SparseVARX$var.z$y.orig[
+      ((nrow(SparseVARX$var.z$y.orig)):
+      (nrow(SparseVARX$var.z$y.orig)-SparseVARX$var.z$p+1))
     ,]))
-    if(SparseVARX$varx.z$b == 0) {
+    if(SparseVARX$var.z$b == 0) {
       Z.ahead.x = xnew[1,]
     } else {
-      Z.ahead.x = as.vector(t(SparseVARX$varx.z$x.orig[
-        ((nrow(SparseVARX$varx.z$x.orig)):
-        (nrow(SparseVARX$varx.z$x.orig)-SparseVARX$varx.z$b+1))
+      Z.ahead.x = as.vector(t(SparseVARX$var.z$x.orig[
+        ((nrow(SparseVARX$var.z$x.orig)):
+        (nrow(SparseVARX$var.z$x.orig)-SparseVARX$var.z$b+1))
       ,]))
     }
     Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
@@ -102,8 +102,8 @@ predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold) {
     }
     y.pred[i,] = y.ahead
     if(i == n.ahead) break
-    SparseVARX$varx.z$y.orig = rbind(SparseVARX$varx.z$y.orig, y.ahead)
-    SparseVARX$varx.z$x.orig = rbind(SparseVARX$varx.z$x.orig, xnew[1,])
+    SparseVARX$var.z$y.orig = rbind(SparseVARX$var.z$y.orig, y.ahead)
+    SparseVARX$var.z$x.orig = rbind(SparseVARX$var.z$x.orig, xnew[1,])
   }
   return (y.pred)
 }
