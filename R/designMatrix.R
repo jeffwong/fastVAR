@@ -1,4 +1,4 @@
-VAR.Z = function(y, p, intercept=F, y.spec=matrix(1,ncol(y),ncol(y)) {
+VAR.Z = function(y, p, intercept=F, y.spec=matrix(1,ncol(y),ncol(y))) {
   if(p < 1) stop("p must be a positive integer")
       
   if(is.null(colnames(y))) {

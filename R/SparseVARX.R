@@ -28,7 +28,7 @@
   return (cv.glmnet(Z.reduced, j[-1]))
 }
 
-SparseVARX = function(y, x, p, b, intercept=F 
+SparseVARX = function(y, x, p, b, intercept=F, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
   x.spec=matrix(1,nrow=ncol(y),ncol=ncol(x)),
   numcore=1, ...) {
@@ -70,7 +70,7 @@ coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
           as.vector(coef(model, l1penalty))
     })
   } else {
-    B = matrix(0, nrow(SparseVARX$var.z$Z, ncol(SparseVARX$var.z$Z))
+    B = matrix(0, nrow(SparseVARX$var.z$Z), ncol(SparseVARX$var.z$Z))
     for (i in 1:length(l1penalty)) {
       B[,i] = as.vector(coef(SparseVARX$model[[i]], l1penalty[i]))
     }

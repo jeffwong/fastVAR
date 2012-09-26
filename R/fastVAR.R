@@ -21,10 +21,10 @@ VAR = function(y, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
     stop("p must be a positive integer")
   }
   var.z = VAR.Z(y, p, intercept)
-  if(is.null(l2penalty) {
+  if(is.null(l2penalty)) {
     if(!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
-                       exponential = exponentialWeights(var.z$Z, var.z$y.p)                 
+                       exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p)
                       )
     }

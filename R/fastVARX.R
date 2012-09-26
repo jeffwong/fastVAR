@@ -24,7 +24,7 @@ VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdi
     return (VAR(y, p, weights, intercept, l2penalty, getdiag))
   }
   var.z = VARX.Z(y, x, p, b, intercept)
-  if(is.null(l2penalty) {
+  if(is.null(l2penalty)) {
     if(!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
