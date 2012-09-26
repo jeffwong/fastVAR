@@ -1,4 +1,4 @@
-VAR.Z = function(y, p, intercept=F, y.spec=matrix(1,ncol(y),ncol(y))) {
+VAR.Z = function(y, p, intercept=F) {
   if(p < 1) stop("p must be a positive integer")
       
   if(is.null(colnames(y))) {
@@ -18,15 +18,15 @@ VAR.Z = function(y, p, intercept=F, y.spec=matrix(1,ncol(y),ncol(y))) {
     y[(p-i):(T-1-i),]
   }, simplify=F)))
   Z.names = colnames(Z)
-  colnames(Z) = sapply(1:p, function(i) {
+  colnames(Z) = as.vector(sapply(1:p, function(i) {
     startIndex = (i-1)*n + 1
     endIndex = i*n
     paste(Z.names[startIndex:endIndex], '.l', i, sep='')
-  })
+  }))
 
   if(intercept) {
     Z = cbind(1, Z)
-    colnames(Z) = c("intercept", colnames(Z))
+    colnames(Z)[1] = "intercept"
   }
 
   return ( structure ( list (
@@ -91,7 +91,7 @@ VARX.Z = function(y, x, p, b, intercept=F) {
   Z = cbind(Z.p, Z.b)
   if(intercept) {
       Z = cbind(1, Z)
-      colnames(Z) = c("intercept", colnames(Z))
+      colnames(Z)[1] = "intercept"
   }
 
   return ( structure ( list (

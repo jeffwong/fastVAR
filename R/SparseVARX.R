@@ -1,4 +1,4 @@
-.sparseVARX = function(j, y, x, p, b, intercept, y.spec, x.spec) {
+.sparseVARX = function(j, y, x, p, b, Z, intercept, y.spec, x.spec) {
   colIndex = j[1]
   x.to.remove = which(!x.spec[colIndex,])
   y.to.remove = which(!y.spec[colIndex,])
@@ -25,7 +25,7 @@
     Z.reduced = Z
   }
        
-  return (cv.glmnet(Z.reduced, j[-1]))
+  if(intercept) return (cv.glmnet(Z.reduced[,-1], j[-1]))
 }
 
 SparseVARX = function(y, x, p, b, intercept=F, 
@@ -34,6 +34,8 @@ SparseVARX = function(y, x, p, b, intercept=F,
   numcore=1, ...) {
  
   if(p < 1) stop("p must be a positive integer")
+  if(!intercept) stop("Sorry, glmnet - the package that fits the elastic net - does not
+                       allow users to supress the intercept at this time")
   if(!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
@@ -43,12 +45,12 @@ SparseVARX = function(y, x, p, b, intercept=F,
   
   if(numcore==1 | !require(multicore)) {
     var.lasso = apply(y.augmented, 2, .sparseVARX, y=y,x=x,p=p,b=b,
-                      intercept=intercept, y.spec=y.spec, x.spec=x.spec)
+                      Z=Z, intercept=intercept, y.spec=y.spec, x.spec=x.spec)
   } else {
     y.augmented.list = c(unname(as.data.frame(y.augmented)))
     var.lasso = mclapply(y.augmented.list, .sparseVARX,
                          y=y,x=x,p=p,b=b,
-                         intercept=intercept,
+                         Z=Z, intercept=intercept,
                          y.spec=y.spec, x.spec=x.spec,
                          mc.cores=numcore, ...)
   }
@@ -61,16 +63,16 @@ SparseVARX = function(y, x, p, b, intercept=F,
 
 coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
   if(missing(l1penalty)) {
-    B = lapply(SparseVARX$model, function(model) {
+    B = data.frame(lapply(SparseVARX$model, function(model) {
           as.vector(coef(model, model$lambda.min))
-    })
+    }))
   }
   else if(length(l1penalty) == 1) {
-    B = lapply(SparseVARX$model, function(model) {
+    B = data.frame(lapply(SparseVARX$model, function(model) {
           as.vector(coef(model, l1penalty))
-    })
+    }))
   } else {
-    B = matrix(0, nrow(SparseVARX$var.z$Z), ncol(SparseVARX$var.z$Z))
+    B = matrix(0, nrow=ncol(SparseVARX$var.z$Z), ncol=ncol(SparseVARX$var.z$y.p))
     for (i in 1:length(l1penalty)) {
       B[,i] = as.vector(coef(SparseVARX$model[[i]], l1penalty[i]))
     }
@@ -78,7 +80,7 @@ coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
   colnames(B) = colnames(SparseVARX$var.z$y.orig)
   rownames(B) = colnames(SparseVARX$var.z$Z)
 
-  return (B)
+  return (as.matrix(B))
 }
 
 predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ...) {

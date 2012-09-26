@@ -28,7 +28,7 @@ VAR = function(y, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
                        linear = linearWeights(var.z$Z, var.z$y.p)
                       )
     }
-    model = lm(var.z$y.p ~ var.z$Z, weights = weights)
+    model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
     if(any(is.na(model$coefficients))) {
       stop("Multivariate lm has invalid coefficients.  
             Check the rank of the design matrix")

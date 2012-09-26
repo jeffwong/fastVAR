@@ -21,7 +21,7 @@
 VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if(p < 1) stop("p must be a positive integer")
   if(missing(x)) {
-    return (VAR(y, p, weights, intercept, l2penalty, getdiag))
+    return (VAR(y, p, intercept, weights, l2penalty, getdiag))
   }
   var.z = VARX.Z(y, x, p, b, intercept)
   if(is.null(l2penalty)) {
@@ -30,7 +30,7 @@ VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdi
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p))
     }
-    model = lm(var.z$y.p ~ var.z$Z)
+    model = lm(var.z$y.p ~ -1 + var.z$Z)
     if(sum(is.na(model$coefficients)) > 0) {
       stop("Multivariate lm has invalid coefficients.
             Check the rank of the design matrix")
