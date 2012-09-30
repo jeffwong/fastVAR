@@ -18,16 +18,19 @@
 }
 
 #' Sparse Vector Autoregression
+#'
 #' Fit a vector autoregressive model with lasso penalty.
 #' The VAR model is estimated using a multiresponse linear regression.
-#' The sparse VAR fits multiple uniresponse linear regressions with lasso penalty
+#' The sparse VAR fits multiple uniresponse linear regressions with lasso penalty.
 #' mclapply from multicore can be used to fit the individual uniresponse
 #' linear regressions in parallel.  Note that mclapply is not available for windows
-#' @param y
-#' @param p
-#' @param intercept
-#' @param y.spec
-#' @param numcore
+#' @param y A matrix where each column represents an individual time series
+#' @param p the number of lags to include in the design matrix
+#' @param intercept logical.  If true, include an intercept term in the model
+#' @param y.spec A binary matrix that can constrain the number of lagged predictor variables.  
+#'   If y.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
+#'   time series of y, or any of its lags.
+#' @param numcore number of cpu cores to use to parallelize this function
 SparseVAR = function(y, p, intercept = F,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
@@ -58,6 +61,11 @@ SparseVAR = function(y, p, intercept = F,
 
 #' Coefficients of a SparseVAR model
 #'
+#' The underlying library, glmnet, computes the full path to the lasso.
+#' This means it is computationally easy to compute the lasso solution
+#' for any penalty term.  This function allows you to pass in the desired
+#' l1 penalty and will return the coefficients
+#' @param sparseVAR an object of class fastVAR.SparseVAR
 #' @param l1penalty The l1 penalty to be applied to the SparseVAR
 #'   model.  
 coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
@@ -82,6 +90,18 @@ coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
   return (as.matrix(B))
 }
 
+#' SparseVAR Predict
+#'
+#' Predict n steps ahead from a fastVAR.SparseVAR object
+#' @param sparseVAR an object of class fastVAR.SparseVAR returned from SparseVAR
+#' @param n.ahead number of steps to predict
+#' @param threshold threshold prediction values to be greater than this value
+#' @param ... extra parameters to pass into the coefficients method
+#'   for objects of type fastVAR.VAR
+#' @examples
+#'   data(Canada)
+#'   predict(SparseVAR(Canada, 3, intercept=T), 1)
+#' @export
 predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVAR$var.z$y.orig))
   colnames(y.pred) = colnames(sparseVAR$var.z$y.orig)

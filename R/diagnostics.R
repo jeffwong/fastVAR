@@ -14,8 +14,8 @@
 
 #' VAR Diagnostics
 #'
-#' Compute diagnostics for VAR models returned from VAR
-#' @param VAR a model of class fastVAR.VAR returned by function VAR
+#' Compute diagnostics for VAR models returned from the VAR family
+#' @param VAR a model of class fastVAR.VAR or fastVAR.VARX
 #' @export
 VAR.diag = function(VAR) {
   ZTZ.inv = .inverseCovariance(VAR$var.z$Z)

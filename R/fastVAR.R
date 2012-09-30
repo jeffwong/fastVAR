@@ -15,6 +15,9 @@
 #' @param l2penalty a ridge regression penalty, useful when the design matrix is 
 #'   very wide, which may happen if p is large.
 #' @param getdiag logical.  If true, return diagnostics
+#' @examples
+#'   data(Canada)
+#'   VAR(Canada, 3, intercept=F)
 #' @export
 VAR = function(y, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if(p < 1) {
@@ -54,6 +57,16 @@ VAR = function(y, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
   return (result)
 }
 
+#' VAR Coefficients
+#'
+#' If the VAR object was fit using a l2 penalty, then the full ridge path was
+#' calculated and stored in the object.  This means the user can adjust the ridge penalty
+#' term here and recompute the coefficients of the VAR
+#' @param VAR an object of class fastVAR.VAR
+#' @param ... if VAR was fit using a l2 penalty, the user can specify a different
+#'   l2 penalty here and have the coefficients recomputed
+#' @return The coefficients for the VAR model
+#' @export
 coef.fastVAR.VAR = function(VAR, ...) {
   coef(VAR$model, ...)
 }
@@ -61,11 +74,15 @@ coef.fastVAR.VAR = function(VAR, ...) {
 #' VAR Predict
 #'
 #' Predict n steps ahead from a fastVAR.VAR object
-#' @param VAR an object of class fastVAR.VAR returned from from VAR
+#' @param VAR an object of class fastVAR.VAR returned from VAR
 #' @param n.ahead number of steps to predict
 #' @param threshold threshold prediction values to be greater than this value
 #' @param ... extra parameters to pass into the coefficients method
 #'   for objects of type fastVAR.VAR
+#' @examples
+#'   data(Canada)
+#'   predict(VAR(Canada, 3, intercept=F), 1)
+#' @export
 predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VAR$var.z$y.orig))
   colnames(y.pred) = colnames(VAR$var.z$y.orig)

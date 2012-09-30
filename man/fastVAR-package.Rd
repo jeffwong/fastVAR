@@ -20,8 +20,8 @@ Includes Canada data set from package vars to validate results.
 \tabular{ll}{
 Package: \tab fastVAR\cr
 Type: \tab Package\cr
-Version: \tab 1.2\cr
-Date: \tab 2012-02-18\cr
+Version: \tab 1.9.9\cr
+Date: \tab 2012-09-30\cr
 License: \tab GPL\cr
 LazyLoad: \tab yes\cr
 Depends: glmnet
@@ -30,18 +30,19 @@ Suggests: multicore
 
 Very few functions:
 \itemize{
-  \item fastVAR - estimate a standard VAR model
-  \item fastVARX - estimate a standard VARX model with exogenous inputs
-  \item VARlasso - use lasso penalty to estimate a VAR model
-  \item VARXlasso - use lasso penalty to estimate a VARX model
-  \item VARpredict - get the n-step ahead prediction for a VAR model
-  \item VARXpredict - get the n-step ahead prediction for a VARX model
-  \item VARdiag - get regression diagnostics for a VAR or VARX model
+  \item VAR - estimate a standard VAR model
+  \item VARX - estimate a standard VARX model with exogenous inputs
+  \item SparseVAR - use lasso penalty to estimate a VAR model
+  \item SparseVARX - use lasso penalty to estimate a VARX model
+  \item VAR.diag - get regression diagnostics for a VAR or VARX model
 }
+
+VAR, VARX, SparseVAR, and SparseVARX have accompanying prediction methods, which
+can be invoked by predict(one of the four VAR models, n.ahead)
 
 }
 \author{
-Jeffrey Wong <jeffwong@stanford.edu>
+Jeffrey Wong <jeff.ct.wong@gmail.com>
 }
 \references{
 Robert Tibshirani <http://www-stat.stanford.edu/~tibs/lasso.html>

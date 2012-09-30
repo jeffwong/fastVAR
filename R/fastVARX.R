@@ -17,6 +17,10 @@
 #' @param l2penalty a ridge regression penalty, useful when the design matrix is 
 #'   very wide, which may happen if p is large.
 #' @param getdiag logical.  If true, return diagnostics
+#' @examples
+#'   data(Canada)
+#'   x = matrix(rnorm(84*4), 84, 4)
+#'   VARX(Canada, x, 3, 2, intercept=F)
 #' @export
 VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if(p < 1) stop("p must be a positive integer")
@@ -55,6 +59,16 @@ VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdi
   return (result) 
 }
 
+#' VARX Coefficients
+#'
+#' If the VARX object was fit using a l2 penalty, then the full ridge path was
+#' calculated and stored in the object.  This means the user can adjust the ridge penalty
+#' term here and recompute the coefficients of the VARX
+#' @param VARX an object of class fastVAR.VARX
+#' @param ... if VAR was fit using a l2 penalty, the user can specify a different
+#'   l2 penalty here and have the coefficients recomputed
+#' @return The coefficients for the VARX model
+#' @export
 coef.fastVAR.VARX = function(VARX, ...) {
   coef(VARX$model, ...)
 }
@@ -63,12 +77,19 @@ coef.fastVAR.VARX = function(VARX, ...) {
 #'
 #' Predict n steps ahead from a fastVAR.VARX object
 #' @param VARX an object of class fastVAR.VARX returned from VARX
-#' @param xnew new values for the exogenous variables
+#' @param xnew a matrix of future values for the exogenous inputs.  Should contain
+#'   n.ahead rows
 #' @param n.ahead number of steps to predict
 #' @param threshold threshold prediction values to be greater than this value
 #' @param ... extra parameters to pass into the coefficients method
 #'   for objects of type fastVAR.VARX
+#' @examples
+#'   data(Canada)
+#'   x = matrix(rnorm(84*4), 84, 4)
+#'   predict(VARX(Canada, x, 3, 2, intercept=F), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+#' @export
 predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
+  if(nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VARX$var.z$y.orig))
   colnames(y.pred) = colnames(VARX$var.z$y.orig)
   for(i in 1:n.ahead) {
