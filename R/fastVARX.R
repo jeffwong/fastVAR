@@ -98,7 +98,7 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
       (nrow(VARX$var.z$y.orig)-VARX$var.z$p+1))
     ,]))
     if(VARX$var.z$b == 0) {
-      Z.ahead.x = xnew[1,]
+      Z.ahead.x = xnew[i,]
     } else {
       Z.ahead.x = as.vector(t(VARX$var.z$x.orig[
         ((nrow(VARX$var.z$x.orig)):
@@ -116,7 +116,7 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
     y.pred[i,] = y.ahead
     if(i == n.ahead) break
     VARX$var.z$y.orig = rbind(VARX$var.z$y.orig, y.ahead)
-    VARX$var.z$x.orig = rbind(VARX$var.z$x.orig, xnew[1,])
+    VARX$var.z$x.orig = rbind(VARX$var.z$x.orig, xnew[i,])
   }
   return (y.pred)
 }
