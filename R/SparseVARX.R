@@ -44,20 +44,25 @@
 #'   If x.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of x, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
-SparseVARX = function(y, x, p, b, 
+SparseVARX = function(y, freq=NULL, x, p, b, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
   x.spec=matrix(1,nrow=ncol(y),ncol=ncol(x)),
   numcore=1, ...) {
  
-  if(p < 1) stop("p must be a positive integer")
-  if(!is.matrix(y)) {
+  if (p < 1) stop("p must be a positive integer")
+  if (!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
-  var.z = VARX.Z(y,x,p,b,intercept=T)
+  if (missing(x)) {
+    return (SparseVAR(y, freq, p, y.spec, numcore))
+  }
+
+  y.seasons = deseason(y, freq)
+  var.z = VARX.Z(y.seasons$remaining,x,p,b,intercept=T)
   Z = var.z$Z
   y.augmented = rbind(1:ncol(y),var.z$y.p)
   
-  if(numcore==1 | !require(multicore)) {
+  if (numcore==1 | !require(multicore)) {
     var.lasso = apply(y.augmented, 2, .sparseVARX, y=y,x=x,p=p,b=b,
                       Z=Z, y.spec=y.spec, x.spec=x.spec)
   } else {
@@ -70,9 +75,10 @@ SparseVARX = function(y, x, p, b,
   }
 
   return(structure (list(
-              model = var.lasso,
-              var.z = var.z 
-  ), class="fastVAR.SparseVARX"))
+                         model = var.lasso,
+                         var.z = var.z,
+                         seasons = y.seasons),
+                    class="fastVAR.SparseVARX"))
 }
 
 #' Coefficients of a SparseVARX model
@@ -85,12 +91,12 @@ SparseVARX = function(y, x, p, b,
 #' @param l1penalty The l1 penalty to be applied to the SparseVARX
 #'   model.  
 coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
-  if(missing(l1penalty)) {
+  if (missing(l1penalty)) {
     B = data.frame(lapply(SparseVARX$model, function(model) {
           as.vector(coef(model, model$lambda.min))
     }))
   }
-  else if(length(l1penalty) == 1) {
+  else if (length(l1penalty) == 1) {
     B = data.frame(lapply(SparseVARX$model, function(model) {
           as.vector(coef(model, l1penalty))
     }))
@@ -121,10 +127,10 @@ coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
 #'   predict(SparseVAR(Canada, 3), 1)
 #' @export
 predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ...) {
-  if(nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
+  if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(SparseVARX$var.z$y.orig))
   colnames(y.pred) = colnames(SparseVARX$var.z$y.orig)
-  for(i in 1:n.ahead) {
+  for (i in 1:n.ahead) {
     Z.ahead.y = as.vector(t(SparseVARX$var.z$y.orig[
       ((nrow(SparseVARX$var.z$y.orig)):
       (nrow(SparseVARX$var.z$y.orig)-SparseVARX$var.z$p+1))
@@ -145,9 +151,10 @@ predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ..
         y.ahead[threshold.indices] = threshold
     }
     y.pred[i,] = y.ahead
-    if(i == n.ahead) break
+    if (i == n.ahead) break
     SparseVARX$var.z$y.orig = rbind(SparseVARX$var.z$y.orig, y.ahead)
     SparseVARX$var.z$x.orig = rbind(SparseVARX$var.z$x.orig, xnew[1,])
   }
-  return (y.pred)
+  season = lastPeriod(SparseVARX$seasons)
+  return (y.pred + season)
 }
