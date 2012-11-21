@@ -7,12 +7,21 @@ setClass("seasonality", representation = "list", S3methods = T)
 #' @export
 is.periodic = function(mts) {
     if (is.vector(mts)) {
-        spec = spectrum(mts)
-        return (F)
+        spec = spectrum(mts, plot = F)
+        g = .fishers.g.test(spec$spec)
+        if (g$p <= 0.05) T else F
     }
     else apply(mts, 2, function(j) {
         is.periodic(j)
     })
+}
+
+.fishers.g.test = function(spec) {
+    g = max(spec) / sum(spec)
+    q = length(spec)
+    p = 1 - sum(sapply(0:q, function(j) { (-1)^j *choose(q,j) * max(0, (1-j*g))^(q-1) }))
+    list(g = max(spec) / sum(spec),
+         p = p)   
 }
 
 #' Deseason
@@ -24,6 +33,7 @@ is.periodic = function(mts) {
 #' @frequency the number of observations per period
 #' @export
 deseason = function(mts, frequency) {
+    if (is.null(frequency)) return (list(seasonal = 0, remaining = mts, freq = NULL))
     periodic = is.periodic(mts)
     if (is.vector(mts)) {
         if (!periodic) {
@@ -64,6 +74,7 @@ deseason = function(mts, frequency) {
 lastPeriod = function(x) {UseMethod("lastPeriod")}
 
 lastPeriod.seasonality = function(seasonality) {
+    if (is.null(seasonality$freq)) {warning("object was not seasonal"); return (0)}
     season = seasonality$seasonal
     if (is.vector(season)) {
         n = length(season)
@@ -75,5 +86,7 @@ lastPeriod.seasonality = function(seasonality) {
 }
 
 findPeriod = function(x) {
-    return (24)
+    spec = spectrum(x, plot = F)
+    spec.max = which.max(spec$spec)
+    spec$freq[spec.max] * length(x)
 }
