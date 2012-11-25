@@ -20,9 +20,9 @@
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   VARX(Canada, NULL, x, 3, 2, intercept=F)
+#'   VARX(Canada, x = x, p = 3, b = 2, intercept=F)
 #' @export
-VARX = function(y, freq = NULL, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
+VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if (p < 1) stop("p must be a positive integer")
   if (missing(x)) {
     return (VAR(y, freq, p, intercept, weights, l2penalty, getdiag))
@@ -87,7 +87,7 @@ coef.fastVAR.VARX = function(VARX, ...) {
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   predict(VARX(Canada, NULL, x, 3, 2, intercept=F), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+#'   predict(VARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
 #' @export
 predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
@@ -119,6 +119,17 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
     VARX$var.z$y.orig = rbind(VARX$var.z$y.orig, y.ahead)
     VARX$var.z$x.orig = rbind(VARX$var.z$x.orig, xnew[i,])
   }
-  season = lastPeriod(VARX$seasons)
-  return (y.pred + season)
+  freq = VARX$seasons$freq
+  freq.indices = which(!is.na(VARX$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(VARX$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(VARX$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }

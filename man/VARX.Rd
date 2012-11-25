@@ -2,8 +2,9 @@
 \alias{VARX}
 \title{Vector Autoregression with Exogenous Inputs}
 \usage{
-  VARX(y, x, p = 1, b = 1, intercept = T, weights = NULL,
-    l2penalty = NULL, getdiag = T)
+  VARX(y, freq = rep(NA, ncol(y)), x, p = 1, b = 1,
+    intercept = T, weights = NULL, l2penalty = NULL,
+    getdiag = T)
 }
 \arguments{
   \item{y}{A matrix of endogenous variables where each
@@ -45,6 +46,6 @@
 \examples{
 data(Canada)
   x = matrix(rnorm(84*4), 84, 4)
-  VARX(Canada, x, 3, 2, intercept=F)
+  VARX(Canada, x = x, p = 3, b = 2, intercept=F)
 }
 

@@ -22,6 +22,6 @@
 }
 \examples{
 data(Canada)
-  predict(SparseVAR(Canada, 3), 1)
+  predict(SparseVAR(Canada, p = 3), 1)
 }
 

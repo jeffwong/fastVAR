@@ -2,8 +2,8 @@
 \alias{VAR}
 \title{Vector Autoregression}
 \usage{
-  VAR(y, p = 1, intercept = T, weights = NULL,
-    l2penalty = NULL, getdiag = T)
+  VAR(y, freq = rep(NA, ncol(y)), p = 1, intercept = T,
+    weights = NULL, l2penalty = NULL, getdiag = T)
 }
 \arguments{
   \item{y}{A matrix where each column represents an
@@ -37,6 +37,6 @@
 }
 \examples{
 data(Canada)
-  VAR(Canada, 3, intercept=F)
+  VAR(Canada, p = 3, intercept = F)
 }
 

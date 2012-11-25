@@ -31,9 +31,9 @@
 #' @param numcore number of cpu cores to use to parallelize this function
 #' @examples 
 #'   data(Canada)
-#'   SparseVAR(Canada, 3)
+#'   SparseVAR(Canada, p = 3)
 #' @export
-SparseVAR = function(y, freq=NULL, p
+SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
   if(p < 1) stop("p must be a positive integer")
@@ -41,7 +41,7 @@ SparseVAR = function(y, freq=NULL, p
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
   y.seasons = deseason(y, freq)
-  var.z = VAR.Z(y$remaining,p,intercept = T)
+  var.z = VAR.Z(y.seasons$remaining,p,intercept = T)
   Z = var.z$Z
   y.augmented = rbind(1:ncol(y),var.z$y.p)
 
@@ -103,7 +103,7 @@ coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
 #'   for objects of type fastVAR.VAR
 #' @examples
 #'   data(Canada)
-#'   predict(SparseVAR(Canada, 3), 1)
+#'   predict(SparseVAR(Canada, p = 3), 1)
 #' @export
 predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVAR$var.z$y.orig))
@@ -123,6 +123,17 @@ predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
     if (i == n.ahead) break
     sparseVAR$var.z$y.orig = rbind(sparseVAR$var.z$y.orig, y.ahead)
   }
-  season = lastPeriod(sparseVAR$seasons)
-  return (y.pred + season)
+  freq = sparseVAR$seasons$freq
+  freq.indices = which(!is.na(sparseVAR$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(sparseVAR$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(sparseVAR$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }
