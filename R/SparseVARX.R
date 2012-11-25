@@ -44,7 +44,7 @@
 #'   If x.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of x, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
-SparseVARX = function(y, freq=NULL, x, p, b, 
+SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
   x.spec=matrix(1,nrow=ncol(y),ncol=ncol(x)),
   numcore=1, ...) {
@@ -90,24 +90,24 @@ SparseVARX = function(y, freq=NULL, x, p, b,
 #' @param sparseVARX an object of class fastVAR.SparseVARX
 #' @param l1penalty The l1 penalty to be applied to the SparseVARX
 #'   model.  
-coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
+coef.fastVAR.SparseVARX = function(sparseVARX, l1penalty) {
   if (missing(l1penalty)) {
-    B = data.frame(lapply(SparseVARX$model, function(model) {
+    B = data.frame(lapply(sparseVARX$model, function(model) {
           as.vector(coef(model, model$lambda.min))
     }))
   }
   else if (length(l1penalty) == 1) {
-    B = data.frame(lapply(SparseVARX$model, function(model) {
+    B = data.frame(lapply(sparseVARX$model, function(model) {
           as.vector(coef(model, l1penalty))
     }))
   } else {
-    B = matrix(0, nrow=ncol(SparseVARX$var.z$Z), ncol=ncol(SparseVARX$var.z$y.p))
+    B = matrix(0, nrow=ncol(sparseVARX$var.z$Z), ncol=ncol(sparseVARX$var.z$y.p))
     for (i in 1:length(l1penalty)) {
-      B[,i] = as.vector(coef(SparseVARX$model[[i]], l1penalty[i]))
+      B[,i] = as.vector(coef(sparseVARX$model[[i]], l1penalty[i]))
     }
   }
-  colnames(B) = colnames(SparseVARX$var.z$y.orig)
-  rownames(B) = colnames(SparseVARX$var.z$Z)
+  colnames(B) = colnames(sparseVARX$var.z$y.orig)
+  rownames(B) = colnames(sparseVARX$var.z$Z)
 
   return (as.matrix(B))
 }
@@ -126,25 +126,25 @@ coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
 #'   data(Canada)
 #'   predict(SparseVAR(Canada, 3), 1)
 #' @export
-predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ...) {
+predict.fastVAR.SparseVARX = function(sparseVARX, xnew, n.ahead=1, threshold, ...) {
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
-  y.pred = matrix(nrow=n.ahead, ncol=ncol(SparseVARX$var.z$y.orig))
-  colnames(y.pred) = colnames(SparseVARX$var.z$y.orig)
+  y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVARX$var.z$y.orig))
+  colnames(y.pred) = colnames(sparseVARX$var.z$y.orig)
   for (i in 1:n.ahead) {
-    Z.ahead.y = as.vector(t(SparseVARX$var.z$y.orig[
-      ((nrow(SparseVARX$var.z$y.orig)):
-      (nrow(SparseVARX$var.z$y.orig)-SparseVARX$var.z$p+1))
+    Z.ahead.y = as.vector(t(sparseVARX$var.z$y.orig[
+      ((nrow(sparseVARX$var.z$y.orig)):
+      (nrow(sparseVARX$var.z$y.orig)-sparseVARX$var.z$p+1))
     ,]))
-    if(SparseVARX$var.z$b == 0) {
+    if(sparseVARX$var.z$b == 0) {
       Z.ahead.x = xnew[1,]
     } else {
-      Z.ahead.x = as.vector(t(SparseVARX$var.z$x.orig[
-        ((nrow(SparseVARX$var.z$x.orig)):
-        (nrow(SparseVARX$var.z$x.orig)-SparseVARX$var.z$b+1))
+      Z.ahead.x = as.vector(t(sparseVARX$var.z$x.orig[
+        ((nrow(sparseVARX$var.z$x.orig)):
+        (nrow(sparseVARX$var.z$x.orig)-sparseVARX$var.z$b+1))
       ,]))
     }
     Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
-    y.ahead = Z.ahead %*% coef(SparseVARX, ...)
+    y.ahead = Z.ahead %*% coef(sparseVARX, ...)
     if(!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
       if(length(threshold.indices) > 0)
@@ -152,9 +152,20 @@ predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ..
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    SparseVARX$var.z$y.orig = rbind(SparseVARX$var.z$y.orig, y.ahead)
-    SparseVARX$var.z$x.orig = rbind(SparseVARX$var.z$x.orig, xnew[1,])
+    sparseVARX$var.z$y.orig = rbind(sparseVARX$var.z$y.orig, y.ahead)
+    sparseVARX$var.z$x.orig = rbind(sparseVARX$var.z$x.orig, xnew[1,])
   }
-  season = lastPeriod(SparseVARX$seasons)
-  return (y.pred + season)
+  freq = sparseVARX$seasons$freq
+  freq.indices = which(!is.na(sparseVARX$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(sparseVARX$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(sparseVARX$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }

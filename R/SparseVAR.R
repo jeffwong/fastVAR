@@ -29,7 +29,7 @@
 #'   If y.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of y, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
-SparseVAR = function(y, freq=NULL, p
+SparseVAR = function(y, freq=rep(NA,ncol(y)), p
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
   if(p < 1) stop("p must be a positive integer")
@@ -118,6 +118,17 @@ predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
     if (i == n.ahead) break
     sparseVAR$var.z$y.orig = rbind(sparseVAR$var.z$y.orig, y.ahead)
   }
-  season = lastPeriod(sparseVAR$seasons)
-  return (y.pred + season)
+  freq = sparseVAR$seasons$freq
+  freq.indices = which(!is.na(sparseVAR$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(sparseVAR$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(sparseVAR$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }
