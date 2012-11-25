@@ -17,9 +17,9 @@
 #' @param getdiag logical.  If true, return diagnostics
 #' @examples
 #'   data(Canada)
-#'   VAR(Canada, NULL, 3, intercept=F)
+#'   VAR(Canada, p = 3, intercept = F)
 #' @export
-VAR = function(y, freq = NULL, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
+VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if (p < 1) {
     stop("p must be a positive integer")
   }
@@ -82,7 +82,7 @@ coef.fastVAR.VAR = function(VAR, ...) {
 #'   for objects of type fastVAR.VAR
 #' @examples
 #'   data(Canada)
-#'   predict(VAR(Canada, NULL, 3, intercept=F), 1)
+#'   predict(VAR(Canada, p = 3, intercept = F), 1)
 #' @export
 predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VAR$var.z$y.orig))
@@ -109,6 +109,17 @@ predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
     if (i == n.ahead) break
     VAR$var.z$y.orig = rbind(VAR$var.z$y.orig, y.ahead)
   }
-  season = lastPeriod(VAR$seasons)
-  return (y.pred + season)
+  freq = VAR$seasons$freq
+  freq.indices = which(!is.na(VAR$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(VAR$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(VAR$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }
