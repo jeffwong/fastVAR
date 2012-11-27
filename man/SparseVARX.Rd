@@ -2,7 +2,7 @@
 \alias{SparseVARX}
 \title{Sparse Vector Autoregression with Exogenous Inputs}
 \usage{
-  SparseVARX(y, x, p, b, intercept = F,
+  SparseVARX(y, x, p, b,
     y.spec = matrix(1, nrow = ncol(y), ncol = ncol(y)),
     x.spec = matrix(1, nrow = ncol(y), ncol = ncol(x)),
     numcore = 1, ...)
@@ -19,9 +19,6 @@
 
   \item{b}{the number of lags to X include in the design
   matrix}
-
-  \item{intercept}{logical.  If true include the intercept
-  term in the model}
 
   \item{y.spec}{A binary matrix that can constrain the
   number of lagged predictor variables.  If y.spec[i][j] =
@@ -44,5 +41,10 @@
   to fit the individual uniresponse linear regressions in
   parallel.  Note that mclapply is not available for
   windows
+}
+\examples{
+data(Canada)
+  x = matrix(rnorm(84*4), 84, 4)
+  SparseVARX(Canada, x, 3, 2)
 }
 
