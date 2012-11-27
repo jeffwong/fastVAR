@@ -44,6 +44,11 @@
 #'   If x.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of x, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
+#' @examples
+#'   data(Canada)
+#'   x = matrix(rnorm(84*4), 84, 4)
+#'   SparseVARX(Canada, x, 3, 2)
+#' @export
 SparseVARX = function(y, x, p, b, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
   x.spec=matrix(1,nrow=ncol(y),ncol=ncol(x)),
@@ -118,7 +123,8 @@ coef.fastVAR.SparseVARX = function(SparseVARX, l1penalty) {
 #'   for objects of type fastVAR.VAR
 #' @examples
 #'   data(Canada)
-#'   predict(SparseVAR(Canada, 3), 1)
+#'   x = matrix(rnorm(84*4), 84, 4)
+#'   predict(SparseVARX(Canada, x, 3, 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
 #' @export
 predict.fastVAR.SparseVARX = function(SparseVARX, xnew, n.ahead=1, threshold, ...) {
   if(nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")

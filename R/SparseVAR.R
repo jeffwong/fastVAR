@@ -29,7 +29,11 @@
 #'   If y.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of y, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
-SparseVAR = function(y, p
+#' @examples 
+#'   data(Canada)
+#'   SparseVAR(Canada, 3)
+#' @export
+SparseVAR = function(y, p,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
   if(p < 1) stop("p must be a positive integer")
@@ -63,7 +67,8 @@ SparseVAR = function(y, p
 #' l1 penalty and will return the coefficients
 #' @param sparseVAR an object of class fastVAR.SparseVAR
 #' @param l1penalty The l1 penalty to be applied to the SparseVAR
-#'   model.  
+#'   model.
+#' @export  
 coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
   if(missing(l1penalty)) {
     B = data.frame(lapply(sparseVAR$model, function(model) {

@@ -2,7 +2,7 @@
 \alias{SparseVAR}
 \title{Sparse Vector Autoregression}
 \usage{
-  SparseVAR(y, p, intercept = F,
+  SparseVAR(y, p,
     y.spec = matrix(1, nrow = ncol(y), ncol = ncol(y)),
     numcore = 1, ...)
 }
@@ -12,9 +12,6 @@
 
   \item{p}{the number of lags to include in the design
   matrix}
-
-  \item{intercept}{logical.  If true, include an intercept
-  term in the model}
 
   \item{y.spec}{A binary matrix that can constrain the
   number of lagged predictor variables.  If y.spec[i][j] =
@@ -32,5 +29,9 @@
   multicore can be used to fit the individual uniresponse
   linear regressions in parallel.  Note that mclapply is
   not available for windows
+}
+\examples{
+data(Canada)
+  SparseVAR(Canada, 3)
 }
 
