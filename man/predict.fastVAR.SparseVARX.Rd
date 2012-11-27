@@ -25,6 +25,7 @@
 }
 \examples{
 data(Canada)
-  predict(SparseVAR(Canada, 3, intercept=T), 1)
+  x = matrix(rnorm(84*4), 84, 4)
+  predict(SparseVARX(Canada, x, 3, 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
 }
 
