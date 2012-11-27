@@ -133,7 +133,7 @@ findPeriod = function(x) {
         spec.max.index = which.max(spec$spec)
         p = 1 - (1 - exp(spec.max))^length(spec$spec)
         if (p <= .05) return (floor(spec$freq[spec.max] * length(spec$spec)))
-        else {warning("signal is not periodic") return (NA)}
+        else {warning("signal is not periodic"); return (NA)}
     }
     else {
         apply(x, 2, findPeriod)

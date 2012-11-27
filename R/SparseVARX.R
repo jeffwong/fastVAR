@@ -47,7 +47,7 @@
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   SparseVARX(Canada, x, 3, 2)
+#'   SparseVARX(Canada, x = x, p = 3, b = 2)
 #' @export
 SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
@@ -130,7 +130,7 @@ coef.fastVAR.SparseVARX = function(sparseVARX, l1penalty) {
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   predict(SparseVARX(Canada, x, 3, 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+#'   predict(SparseVARX(Canada, x = x, p = 3, b = 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
 #' @export
 predict.fastVAR.SparseVARX = function(sparseVARX, xnew, n.ahead=1, threshold, ...) {
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")

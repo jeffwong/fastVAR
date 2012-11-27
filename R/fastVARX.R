@@ -20,7 +20,7 @@
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   VARX(Canada, NULL, x, 3, 2, intercept=F)
+#'   VARX(Canada, x = x, p = 3, b = 2, intercept=F)
 #' @export
 VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if (p < 1) stop("p must be a positive integer")

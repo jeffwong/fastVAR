@@ -1,6 +1,6 @@
 \name{coef.fastVAR.RidgePath}
 \alias{coef.fastVAR.RidgePath}
-\title{Ridge Path}
+\title{Ridge Coefficients}
 \usage{
   coef.fastVAR.RidgePath(ridgePath, lambda)
 }
