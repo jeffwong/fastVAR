@@ -2,7 +2,7 @@
 \alias{SparseVAR}
 \title{Sparse Vector Autoregression}
 \usage{
-  SparseVAR(y, p,
+  SparseVAR(y, freq = rep(NA, ncol(y)), p,
     y.spec = matrix(1, nrow = ncol(y), ncol = ncol(y)),
     numcore = 1, ...)
 }
@@ -32,6 +32,6 @@
 }
 \examples{
 data(Canada)
-  SparseVAR(Canada, 3)
+  SparseVAR(Canada, p = 3)
 }
 

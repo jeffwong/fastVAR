@@ -20,41 +20,42 @@
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   VARX(Canada, x, 3, 2, intercept=F)
+#'   VARX(Canada, x = x, p = 3, b = 2, intercept=F)
 #' @export
-VARX = function(y, x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
-  if(p < 1) stop("p must be a positive integer")
-  if(missing(x)) {
-    return (VAR(y, p, intercept, weights, l2penalty, getdiag))
+VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NULL, l2penalty=NULL, getdiag=T) {
+  if (p < 1) stop("p must be a positive integer")
+  if (missing(x)) {
+    return (VAR(y, freq, p, intercept, weights, l2penalty, getdiag))
   }
-  var.z = VARX.Z(y, x, p, b, intercept)
-  if(is.null(l2penalty)) {
-    if(!is.null(weights) & !is.vector(weights)) {
+  y.seasons = deseason(y, freq)
+  var.z = VARX.Z(y.seasons$remaining, x, p, b, intercept)
+  if (is.null(l2penalty)) {
+    if (!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p))
     }
-    model = lm(var.z$y.p ~ -1 + var.z$Z)
-    if(sum(is.na(model$coefficients)) > 0) {
-      stop("Multivariate lm has invalid coefficients.
-            Check the rank of the design matrix")
+    model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
+    if (sum(is.na(model$coefficients)) > 0) {
+      warning("Multivariate lm has invalid coefficients.
+               Check the rank of the design matrix")
     }
     result = structure(list(
                             model = model,
-                            var.z = var.z
-                            ), class="fastVAR.VARX")
+                            var.z = var.z,
+                            seasons = y.seasons
+                           ), class="fastVAR.VARX")
  
   } else {
     #Compute full path ridge solution
-    z.svd = svd(var.z$Z)
-    ridgePath = function(l2penalty) {
-        z.svd$v %*% diag(1 / (z.svd$d^2 + l2penalty)) %*% diag(z.svd$d) %*% t(z.svd$u) %*% var.z$y.p
-    }
     result = structure(list(
-                            model = structure(ridgePath, class="fastVAR.RidgePath"),
-                            var.z = var.z), class="fastVAR.VARX")
+                            model = structure(ridgePath(var.z$y.p, var.z$Z),
+                                              class="fastVAR.RidgePath"),
+                            var.z = var.z,
+                            seasons = y.seasons),
+                       class="fastVAR.VARX")
   }
-  if(getdiag) result$diag = VAR.diag(result)
+  if (getdiag) result$diag = VAR.diag(result)
 
   return (result) 
 }
@@ -86,18 +87,18 @@ coef.fastVAR.VARX = function(VARX, ...) {
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   predict(VARX(Canada, x, 3, 2, intercept=F), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+#'   predict(VARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
 #' @export
 predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
-  if(nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
+  if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VARX$var.z$y.orig))
   colnames(y.pred) = colnames(VARX$var.z$y.orig)
-  for(i in 1:n.ahead) {
+  for (i in 1:n.ahead) {
     Z.ahead.y = as.vector(t(VARX$var.z$y.orig[
       ((nrow(VARX$var.z$y.orig)):
       (nrow(VARX$var.z$y.orig)-VARX$var.z$p+1))
     ,]))
-    if(VARX$var.z$b == 0) {
+    if (VARX$var.z$b == 0) {
       Z.ahead.x = xnew[i,]
     } else {
       Z.ahead.x = as.vector(t(VARX$var.z$x.orig[
@@ -107,16 +108,28 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
     }
     Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
     y.ahead = Z.ahead %*% coef(VARX)
-    if(!missing(threshold)) {
+    if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
-      if(length(threshold.indices) > 0)
+      if (length(threshold.indices) > 0)
         y.ahead[threshold.indices] = threshold
       y.ahead[threshold.indices] = threshold
     }
     y.pred[i,] = y.ahead
-    if(i == n.ahead) break
+    if (i == n.ahead) break
     VARX$var.z$y.orig = rbind(VARX$var.z$y.orig, y.ahead)
     VARX$var.z$x.orig = rbind(VARX$var.z$x.orig, xnew[i,])
   }
-  return (y.pred)
+  freq = VARX$seasons$freq
+  freq.indices = which(!is.na(VARX$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(VARX$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(VARX$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }

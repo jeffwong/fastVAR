@@ -31,16 +31,17 @@
 #' @param numcore number of cpu cores to use to parallelize this function
 #' @examples 
 #'   data(Canada)
-#'   SparseVAR(Canada, 3)
+#'   SparseVAR(Canada, p = 3)
 #' @export
-SparseVAR = function(y, p,
+SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
   if(p < 1) stop("p must be a positive integer")
   if(!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
-  var.z = VAR.Z(y,p,intercept = T)
+  y.seasons = deseason(y, freq)
+  var.z = VAR.Z(y.seasons$remaining,p,intercept = T)
   Z = var.z$Z
   y.augmented = rbind(1:ncol(y),var.z$y.p)
 
@@ -54,9 +55,10 @@ SparseVAR = function(y, p,
   }
 
   return(structure(list(
-              model = var.lasso,
-              var.z = var.z 
-  ), class="fastVAR.SparseVAR"))
+                        model = var.lasso,
+                        var.z = var.z,
+                        seasons = y.seasons),
+                   class="fastVAR.SparseVAR"))
 }
 
 #' Coefficients of a SparseVAR model
@@ -70,12 +72,12 @@ SparseVAR = function(y, p,
 #'   model.
 #' @export  
 coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
-  if(missing(l1penalty)) {
+  if (missing(l1penalty)) {
     B = data.frame(lapply(sparseVAR$model, function(model) {
           as.vector(coef(model, model$lambda.min))
     }))
   }
-  else if(length(l1penalty) == 1) {
+  else if (length(l1penalty) == 1) {
     B = data.frame(lapply(sparseVAR$model, function(model) {
           as.vector(coef(model, l1penalty))
     }))
@@ -101,25 +103,37 @@ coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
 #'   for objects of type fastVAR.VAR
 #' @examples
 #'   data(Canada)
-#'   predict(SparseVAR(Canada, 3), 1)
+#'   predict(SparseVAR(Canada, p = 3), 1)
 #' @export
 predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVAR$var.z$y.orig))
   colnames(y.pred) = colnames(sparseVAR$var.z$y.orig)
-  for(i in 1:n.ahead) {
+  for (i in 1:n.ahead) {
     Z.ahead = c(1,as.vector(t(sparseVAR$var.z$y.orig[
         ((nrow(sparseVAR$var.z$y.orig)):
         (nrow(sparseVAR$var.z$y.orig)-sparseVAR$var.z$p+1))
       ,])))
     y.ahead = Z.ahead %*% coef(sparseVAR, ...)
-    if(!missing(threshold)) {
+    if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
       if(length(threshold.indices) > 0)
         y.ahead[threshold.indices] = threshold
     }
     y.pred[i,] = y.ahead
-    if(i == n.ahead) break
+    if (i == n.ahead) break
     sparseVAR$var.z$y.orig = rbind(sparseVAR$var.z$y.orig, y.ahead)
   }
-  return (y.pred)
+  freq = sparseVAR$seasons$freq
+  freq.indices = which(!is.na(sparseVAR$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(sparseVAR$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(sparseVAR$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }

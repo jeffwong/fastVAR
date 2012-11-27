@@ -28,3 +28,4 @@ Collate:
     'fastVARX.R'
     'ridge.R'
     'weights.R'
+    'tsutils.R'

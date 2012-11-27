@@ -2,7 +2,7 @@
 \alias{predict.fastVAR.SparseVARX}
 \title{SparseVARX Predict}
 \usage{
-  predict.fastVAR.SparseVARX(SparseVARX, xnew, n.ahead = 1,
+  predict.fastVAR.SparseVARX(sparseVARX, xnew, n.ahead = 1,
     threshold, ...)
 }
 \arguments{
@@ -26,6 +26,6 @@
 \examples{
 data(Canada)
   x = matrix(rnorm(84*4), 84, 4)
-  predict(SparseVARX(Canada, x, 3, 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+  predict(SparseVARX(Canada, x = x, p = 3, b = 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
 }
 

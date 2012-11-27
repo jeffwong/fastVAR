@@ -21,6 +21,6 @@
 }
 \examples{
 data(Canada)
-  predict(VAR(Canada, 3, intercept=F), 1)
+  predict(VAR(Canada, p = 3, intercept = F), 1)
 }
 
