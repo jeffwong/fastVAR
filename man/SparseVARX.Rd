@@ -2,7 +2,7 @@
 \alias{SparseVARX}
 \title{Sparse Vector Autoregression with Exogenous Inputs}
 \usage{
-  SparseVARX(y, x, p, b,
+  SparseVARX(y, freq = rep(NA, ncol(y)), x, p, b,
     y.spec = matrix(1, nrow = ncol(y), ncol = ncol(y)),
     x.spec = matrix(1, nrow = ncol(y), ncol = ncol(x)),
     numcore = 1, ...)
@@ -45,6 +45,6 @@
 \examples{
 data(Canada)
   x = matrix(rnorm(84*4), 84, 4)
-  SparseVARX(Canada, x, 3, 2)
+  SparseVARX(Canada, x = x, p = 3, b = 2)
 }
 

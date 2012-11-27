@@ -17,42 +17,43 @@
 #' @param getdiag logical.  If true, return diagnostics
 #' @examples
 #'   data(Canada)
-#'   VAR(Canada, 3, intercept=F)
+#'   VAR(Canada, p = 3, intercept = F)
 #' @export
-VAR = function(y, p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
-  if(p < 1) {
+VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
+  if (p < 1) {
     stop("p must be a positive integer")
   }
-  var.z = VAR.Z(y, p, intercept)
-  if(is.null(l2penalty)) {
-    if(!is.null(weights) & !is.vector(weights)) {
+  y.seasons = deseason(y, freq)
+  var.z = VAR.Z(y.seasons$remaining, p, intercept)
+  if (is.null(l2penalty)) {
+    if (!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p)
                       )
     }
     model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
-    if(any(is.na(model$coefficients))) {
-      stop("Multivariate lm has invalid coefficients.  
-            Check the rank of the design matrix")
+    if (any(is.na(model$coefficients))) {
+      warning("Multivariate lm has invalid coefficients.  
+               Check the rank of the design matrix")
     }
     result = structure(list(
                             model = model,
-                            var.z = var.z
-                            ), class="fastVAR.VAR")
+                            var.z = var.z,
+                            seasons = y.seasons
+                            ),
+                       class="fastVAR.VAR")
   } else {
     #Compute full path ridge solution
-    z.svd = svd(var.z$Z)
-    ridgePath = function(l2penalty) {
-        z.svd$v %*% diag(1 / (z.svd$d^2 + l2penalty)) %*% diag(z.svd$d) %*% t(z.svd$u) %*% var.z$y.p
-    }
-    ridge.coef = ridgePath(l2penalty)
+    ridge.coef = ridgePath(var.z$y.p, var.z$Z, l2penalty)
     result = structure(list(
                             model = structure(ridgePath, class="fastVAR.RidgePath"),
-                            var.z = var.z), class="fastVAR.VAR")
+                            var.z = var.z,
+                            seasons = y.seasons),
+                       class="fastVAR.VAR")
   }
 
-  if(getdiag) result$diag = VAR.diag(result)
+  if (getdiag) result$diag = VAR.diag(result)
 
   return (result)
 }
@@ -81,13 +82,13 @@ coef.fastVAR.VAR = function(VAR, ...) {
 #'   for objects of type fastVAR.VAR
 #' @examples
 #'   data(Canada)
-#'   predict(VAR(Canada, 3, intercept=F), 1)
+#'   predict(VAR(Canada, p = 3, intercept = F), 1)
 #' @export
 predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VAR$var.z$y.orig))
   colnames(y.pred) = colnames(VAR$var.z$y.orig)
-  for(i in 1:n.ahead) {
-    if(VAR$var.z$intercept) {
+  for (i in 1:n.ahead) {
+    if (VAR$var.z$intercept) {
       Z.ahead = c(1,as.vector(t(VAR$var.z$y.orig[
         ((nrow(VAR$var.z$y.orig)):
         (nrow(VAR$var.z$y.orig)-VAR$var.z$p+1))
@@ -99,14 +100,26 @@ predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
       ,]))
     }
     y.ahead = Z.ahead %*% coef(VAR, ...)
-    if(!missing(threshold)) {
+    if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
-      if(length(threshold.indices) > 0)
+      if (length(threshold.indices) > 0)
         y.ahead[threshold.indices] = threshold
     }
     y.pred[i,] = y.ahead
-    if(i == n.ahead) break
+    if (i == n.ahead) break
     VAR$var.z$y.orig = rbind(VAR$var.z$y.orig, y.ahead)
   }
-  return (y.pred)
+  freq = VAR$seasons$freq
+  freq.indices = which(!is.na(VAR$seasons$freq))
+  if (length(freq.indices) > 0) {
+    lastSeason = lastPeriod(VAR$seasons) #returns a list
+    y.pred.seasonal = sapply(freq.indices, function(i) {
+      season.start = periodIndex(freq[i], nrow(VAR$var.z$y.orig + 1))
+      season.end = season.start + n.ahead - 1
+      rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
+    })
+    y.pred[,freq.indices] = y.pred[,freq.indices] + y.pred.seasonal
+    return (y.pred)
+  }
+  else return (y.pred)
 }

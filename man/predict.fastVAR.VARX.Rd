@@ -26,6 +26,6 @@
 \examples{
 data(Canada)
   x = matrix(rnorm(84*4), 84, 4)
-  predict(VARX(Canada, x, 3, 2, intercept=F), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
+  predict(VARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
 }
 
