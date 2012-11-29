@@ -15,9 +15,9 @@ Description: This package is designed for time series data. Fits Vector
 License: GPL
 LazyLoad: yes
 Depends:
-    glmnet
-Suggests:
-    multicore
+    glmnet,
+    RcppEigen,
+    parallel
 Collate:
     'SparseVAR.R'
     'SparseVARX.R'
