@@ -45,9 +45,9 @@ VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2pe
                        class="fastVAR.VAR")
   } else {
     #Compute full path ridge solution
-    ridge.coef = ridgePath(var.z$y.p, var.z$Z, l2penalty)
+    ridge.coef = ridgePath(var.z$y.p, var.z$Z)
     result = structure(list(
-                            model = structure(ridgePath, class="fastVAR.RidgePath"),
+                            model = structure(list(ridgePath=ridge.coef, l2penalty=l2penalty), class="fastVAR.RidgePath"),
                             var.z = var.z,
                             seasons = y.seasons),
                        class="fastVAR.VAR")

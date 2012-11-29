@@ -20,6 +20,7 @@ ridgePath = function(y, x) {
 #' @param ridgePath an object of class fastVAR.RidgePath
 #' @param lambda the desired l2penalty
 #' @export
-coef.fastVAR.RidgePath = function(ridgePath, lambda) {
-  ridgePath(lambda)
+coef.fastVAR.RidgePath = function(model, l2penalty) {
+  if (missing(l2penalty)) model$ridgePath(model$l2penalty)
+  else model$ridgePath(l2penalty)
 }

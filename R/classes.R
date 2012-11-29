@@ -6,4 +6,4 @@ setClass("fastVAR.VAR", representation = "list", S3methods = T)
 setClass("fastVAR.SparseVAR", representation = "list", S3methods = T)
 setClass("fastVAR.VARZ", representation = "list", S3methods = T)
 
-setClass("fastVAR.RidgePath", representation = "function", S3methods=T)
+setClass("fastVAR.RidgePath", representation = "list", S3methods=T)

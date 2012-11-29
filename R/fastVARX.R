@@ -49,7 +49,8 @@ VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NUL
   } else {
     #Compute full path ridge solution
     result = structure(list(
-                            model = structure(ridgePath(var.z$y.p, var.z$Z),
+                            model = structure(list(ridgePath = ridgePath(var.z$y.p, var.z$Z),
+                                                   l2penalty = l2penalty),
                                               class="fastVAR.RidgePath"),
                             var.z = var.z,
                             seasons = y.seasons),
