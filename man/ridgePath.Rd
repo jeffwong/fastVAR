@@ -2,7 +2,7 @@
 \alias{ridgePath}
 \title{Ridge Path}
 \usage{
-  ridgePath(y, x)
+  ridgePath(Y, X, weights = NULL)
 }
 \arguments{
   \item{y}{response vector or matrix}
