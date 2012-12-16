@@ -17,7 +17,9 @@ LazyLoad: yes
 Depends:
     glmnet,
     RcppEigen,
+    Rcpp,
     parallel
+LinkingTo: Rcpp, RcppEigen
 Collate:
     'SparseVAR.R'
     'SparseVARX.R'
@@ -29,3 +31,6 @@ Collate:
     'ridge.R'
     'weights.R'
     'tsutils.R'
+    'RcppExports.R'
+    'fastMlm.R'
+    'utils.R'

@@ -32,9 +32,10 @@ is.periodic = function(mts) {
 #' unexplainable components.
 #' @param mts either a vector representing 1 time series or a
 #'   a data frame or matrix representing multiple time series
-#' @frequency the number of observations per period - either
+#' @param frequency the number of observations per period - either
 #'   a single numeric in the univariate case or a vector in the
 #'   multivariate case
+#' @param auto if true try to use the spectral density to estimate the frequency
 #' @export
 deseason = function(mts, frequency = NA, auto = F) {
     if (is.na(frequency) & !auto) return (list(seasonal = 0, remaining = mts, freq = NA))

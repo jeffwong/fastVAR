@@ -36,8 +36,8 @@
 SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
                      numcore=1, ...) {
-  if(p < 1) stop("p must be a positive integer")
-  if(!is.matrix(y)) {
+  if (p < 1) stop("p must be a positive integer")
+  if (!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
   }
   y.seasons = deseason(y, freq)
@@ -45,7 +45,7 @@ SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
   Z = var.z$Z
   y.augmented = rbind(1:ncol(y),var.z$y.p)
 
-  if(numcore == 1 | !require(multicore)) {
+  if (numcore == 1) {
     var.lasso = apply(y.augmented, 2, .sparseVAR, y=y,p=p,
                       Z=Z, y.spec=y.spec)
   } else {

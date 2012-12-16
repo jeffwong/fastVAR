@@ -67,7 +67,7 @@ SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b,
   Z = var.z$Z
   y.augmented = rbind(1:ncol(y),var.z$y.p)
   
-  if (numcore==1 | !require(multicore)) {
+  if (numcore==1) {
     var.lasso = apply(y.augmented, 2, .sparseVARX, y=y,x=x,p=p,b=b,
                       Z=Z, y.spec=y.spec, x.spec=x.spec)
   } else {
