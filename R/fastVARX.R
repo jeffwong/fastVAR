@@ -107,7 +107,8 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
         (nrow(VARX$var.z$x.orig)-VARX$var.z$b+1))
       ,]))
     }
-    Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
+    if(VARX$var.z$intercept) Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
+    else Z.ahead = c(Z.ahead.y, Z.ahead.x)
     y.ahead = Z.ahead %*% coef(VARX)
     if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
