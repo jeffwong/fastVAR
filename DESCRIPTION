@@ -13,6 +13,7 @@ Description: This package is designed for time series data. Fits Vector
     compare models, and prediction functions can be used to calculate the
     n-step ahead prediction.
 License: GPL
+URL: https://github.com/jeffwong/fastVAR
 LazyLoad: yes
 Depends:
     glmnet,
