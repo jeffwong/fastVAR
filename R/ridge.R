@@ -8,9 +8,9 @@
 ridgePath = function(Y, X, weights = NULL) {
   if (!is.null(weights)) {X = scale.rows(X, sqrt(weights)); Y = scale.rows(Y, sqrt(weights))}
   x.svd = svd(X)
-  duty = diag(x.svd$d) %*% t(x.svd$u) %*% Y
+  duty = scale.rows(crossprod(x.svd$u, Y), x.svd$d)
   return (function(l2penalty) {
-    x.svd$v %*% diag(1 / (x.svd$d^2 + l2penalty)) %*% duty
+    x.svd$v %*% scale.rows(duty, 1 / (x.svd$d^2 + l2penalty))
   })
 }
 
