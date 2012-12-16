@@ -25,15 +25,16 @@ VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2pe
   }
   y.seasons = deseason(y, freq)
   var.z = VAR.Z(y.seasons$remaining, p, intercept)
-  if (is.null(l2penalty)) {
-    if (!is.null(weights) & !is.vector(weights)) {
+  if (!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p)
                       )
-    }
-    model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
-    if (any(is.na(model$coefficients))) {
+  }
+  if (is.null(l2penalty)) {
+    #model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
+    model = fastMlm(var.z$Z, var.z$y.p, weights)
+    if (any(is.na(coef(model)))) {
       warning("Multivariate lm has invalid coefficients.  
                Check the rank of the design matrix")
     }
@@ -45,7 +46,7 @@ VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2pe
                        class="fastVAR.VAR")
   } else {
     #Compute full path ridge solution
-    ridge.coef = ridgePath(var.z$y.p, var.z$Z)
+    ridge.coef = ridgePath(var.z$y.p, var.z$Z, weights)
     result = structure(list(
                             model = structure(list(ridgePath=ridge.coef, l2penalty=l2penalty), class="fastVAR.RidgePath"),
                             var.z = var.z,

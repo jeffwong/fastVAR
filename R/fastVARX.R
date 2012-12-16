@@ -29,14 +29,15 @@ VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NUL
   }
   y.seasons = deseason(y, freq)
   var.z = VARX.Z(y.seasons$remaining, x, p, b, intercept)
-  if (is.null(l2penalty)) {
-    if (!is.null(weights) & !is.vector(weights)) {
+  if (!is.null(weights) & !is.vector(weights)) {
       weights = switch(weights,
                        exponential = exponentialWeights(var.z$Z, var.z$y.p),
                        linear = linearWeights(var.z$Z, var.z$y.p))
-    }
-    model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
-    if (sum(is.na(model$coefficients)) > 0) {
+  }
+  if (is.null(l2penalty)) {
+    #model = lm(var.z$y.p ~ -1 + var.z$Z, weights = weights)
+    model = fastMlm(var.z$Z, var.z$y.p, weights)
+    if (sum(is.na(coef(model))) > 0) {
       warning("Multivariate lm has invalid coefficients.
                Check the rank of the design matrix")
     }
@@ -45,11 +46,10 @@ VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NUL
                             var.z = var.z,
                             seasons = y.seasons
                            ), class="fastVAR.VARX")
- 
   } else {
     #Compute full path ridge solution
     result = structure(list(
-                            model = structure(list(ridgePath = ridgePath(var.z$y.p, var.z$Z),
+                            model = structure(list(ridgePath = ridgePath(var.z$y.p, var.z$Z, weights),
                                                    l2penalty = l2penalty),
                                               class="fastVAR.RidgePath"),
                             var.z = var.z,
@@ -107,7 +107,8 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
         (nrow(VARX$var.z$x.orig)-VARX$var.z$b+1))
       ,]))
     }
-    Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
+    if(VARX$var.z$intercept) Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
+    else Z.ahead = c(Z.ahead.y, Z.ahead.x)
     y.ahead = Z.ahead %*% coef(VARX)
     if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
