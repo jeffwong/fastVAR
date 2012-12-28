@@ -37,9 +37,9 @@ is.periodic = function(mts) {
 #'   multivariate case
 #' @param auto if true try to use the spectral density to estimate the frequency
 #' @export
-deseason = function(mts, frequency = NA, auto = F) {
-    if (is.na(frequency) & !auto) return (list(seasonal = 0, remaining = mts, freq = NA))
-    if (is.na(frequency) & auto) frequency = findPeriod(mts)
+deseason = function(mts, frequency = rep(NA, ncol(mts)), auto = F) {
+    if (auto) frequency = findPeriod(mts)
+    else if (all(is.na(frequency))) return (list(seasonal = 0, remaining = mts, freq = NA))
     bad.freq = which((2*frequency) > nrow(mts))
     if (length(bad.freq) > 0) {
         warning (paste("in order to deseasonalize a time series, it should have
@@ -49,7 +49,7 @@ deseason = function(mts, frequency = NA, auto = F) {
     }
     if (is.vector(mts)) {
         if (is.na(frequency)) {
-            warning("time series is not periodic")
+            message("time series is not periodic")
             return (structure(list(seasonal = rep(0, length(mts)),
                                    remaining = mts, freq = frequency),
                               class = "seasonality"))
@@ -64,7 +64,7 @@ deseason = function(mts, frequency = NA, auto = F) {
     else {
         periodic.cols = which(!is.na(frequency))
         if (length(periodic.cols) == 0) {
-            warning("no periodic time series found")
+            message("no periodic time series found")
             return (structure(list(seasonal = matrix(0, nrow(mts), ncol(mts)),
                                    remaining = mts, freq = frequency),
                               class = "seasonality"))
@@ -94,7 +94,7 @@ deseason = function(mts, frequency = NA, auto = F) {
 #' with a period of 24, then this function should only return the first
 #' 24 measurements
 #' @export
-lastPeriod = function(x) {UseMethod("lastPeriod")}
+lastPeriod = function(x) UseMethod("lastPeriod")
 
 lastPeriod.seasonality = function(seasonality) {
     if (length(seasonality$freq) > 1) {
@@ -134,7 +134,7 @@ findPeriod = function(x) {
         spec.max.index = which.max(spec$spec)
         p = 1 - (1 - exp(spec.max))^length(spec$spec)
         if (p <= .05) return (floor(spec$freq[spec.max] * length(spec$spec)))
-        else {warning("signal is not periodic"); return (NA)}
+        else {message("signal is not periodic"); return (NA)}
     }
     else {
         apply(x, 2, findPeriod)
