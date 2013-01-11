@@ -54,12 +54,9 @@ GroupVARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, weights=NULL, getdi
 
 #' GroupVARX Coefficients
 #'
-#' If the GroupVARX object was fit using a l2 penalty, then the full ridge path was
-#' calculated and stored in the object.  This means the user can adjust the ridge penalty
-#' term here and recompute the coefficients of the GroupVARX
 #' @param GroupVARX an object of class fastVAR.GroupVARX
-#' @param ... if VAR was fit using a l2 penalty, the user can specify a different
-#'   l2 penalty here and have the coefficients recomputed
+#' @param ... extra parameters to pass into the coefficients method
+#'   for objects of type fastVAR.GroupVARX
 #' @return The coefficients for the GroupVARX model
 #' @method coef fastVAR.GroupVARX
 #' @S3method coef fastVAR.GroupVARX

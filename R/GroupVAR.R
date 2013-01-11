@@ -51,12 +51,9 @@ GroupVAR = function(y, freq = rep(NA,ncol(y)), p=1, weights=NULL, getdiag=T) {
 
 #' GroupVAR Coefficients
 #'
-#' If the VAR object was fit using a l2 penalty, then the full ridge path was
-#' calculated and stored in the object.  This means the user can adjust the ridge penalty
-#' term here and recompute the coefficients of the VAR
 #' @param GroupVAR an object of class fastVAR.GroupVAR
-#' @param ... if VAR was fit using a l2 penalty, the user can specify a different
-#'   l2 penalty here and have the coefficients recomputed
+#' @param ... extra parameters to pass into the coefficients method
+#'   for objects of type fastVAR.GroupVAR
 #' @return The coefficients for the VAR model
 #' @method coef fastVAR.GroupVAR
 #' @S3method coef fastVAR.GroupVAR
@@ -68,12 +65,12 @@ coef.fastVAR.GroupVAR = function(GroupVAR, ...) {
 
 #' GroupVAR Predict
 #'
-#' Predict n steps ahead from a fastVAR.VAR object
-#' @param VAR an object of class fastVAR.VAR returned from VAR
+#' Predict n steps ahead from a fastVAR.GroupVAR object
+#' @param GroupVAR an object of class fastVAR.GroupVAR returned from GroupVAR
 #' @param n.ahead number of steps to predict
 #' @param threshold threshold prediction values to be greater than this value
 #' @param ... extra parameters to pass into the coefficients method
-#'   for objects of type fastVAR.VAR
+#'   for objects of type fastVAR.GroupVAR
 #' @examples
 #'   data(Canada)
 #'   predict(GroupVAR(Canada, p = 3), 1)
