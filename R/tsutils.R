@@ -69,7 +69,7 @@ deseason = function(mts, frequency = rep(NA, ncol(mts)), auto = F) {
                                    remaining = mts, freq = frequency),
                               class = "seasonality"))
         }
-        decomp = apply(rbind(1:ncol(mts),mts)[,periodic.cols], 2, function(j) {
+        decomp = apply(as.matrix(rbind(1:ncol(mts),mts)[,periodic.cols]), 2, function(j) {
             colIndex = j[1]
             j.orig = j[-1]
             j.ts = ts(j.orig, frequency=frequency[colIndex])
@@ -78,7 +78,8 @@ deseason = function(mts, frequency = rep(NA, ncol(mts)), auto = F) {
             remaining = apply(y$time.series[,-1], 1, sum)
             return (list(seasonal=seasonal, remaining=remaining))
         })
-        remaining = seasonal = matrix(0, nrow(mts), ncol(mts))
+        seasonal = matrix(0, nrow(mts), ncol(mts))
+        remaining = mts
         decomp.seasonal = do.call('cbind', lapply(decomp, function(i) i$seasonal))
         decomp.remaining = do.call('cbind', lapply(decomp, function(i) i$remaining))
         seasonal[,periodic.cols] = decomp.seasonal
@@ -104,11 +105,10 @@ lastPeriod.seasonality = function(seasonality) {
             return (NA)
         }
         n = nrow(seasonality$seasonal)
-        apply(rbind(1:ncol(seasonality$seasonal), seasonality$seasonal), 2, function(j) {
-            freq = seasonality$freq[colIndex]
-            if (is.na(freq)) return (NA)
-            colIndex = j[1]
+        apply(rbind(seasonality$freq, seasonality$seasonal), 2, function(j) {
+            freq = j[1]
             j.orig = j[-1]
+            if (is.na(freq)) return (NA)
             endIndex = floor(n / freq) * freq
             startIndex = endIndex - freq + 1
             j.orig[startIndex : endIndex]
