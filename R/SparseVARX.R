@@ -1,4 +1,4 @@
-.sparseVARX = function(j, y, x, p, b, Z, y.spec, x.spec) {
+.sparseVARX = function(j, y, x, p, b, Z, y.spec, x.spec, alpha) {
   colIndex = j[1]
   x.to.remove = which(!x.spec[colIndex,])
   y.to.remove = which(!y.spec[colIndex,])
@@ -23,7 +23,7 @@
     Z.reduced = Z
   }
        
-  return (cv.glmnet(Z.reduced[,-1], j[-1]))
+  return (cv.glmnet(Z.reduced[,-1], j[-1], alpha=alpha))
 }
 
 #' Sparse Vector Autoregression with Exogenous Inputs
@@ -47,6 +47,7 @@
 #'   If x.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of x, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
+#' @param alpha the elastic net mixing parameter, as defined in 'glmnet'
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
@@ -55,7 +56,7 @@
 SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b, 
   y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)), 
   x.spec=matrix(1,nrow=ncol(y),ncol=ncol(x)),
-  numcore=1, ...) {
+  numcore=1, alpha=0.8, ...) {
  
   if (p < 1) stop("p must be a positive integer")
   if (!is.matrix(y)) {
@@ -72,7 +73,7 @@ SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b,
   
   if (numcore==1) {
     var.lasso = apply(y.augmented, 2, .sparseVARX, y=y,x=x,p=p,b=b,
-                      Z=Z, y.spec=y.spec, x.spec=x.spec)
+                      Z=Z, y.spec=y.spec, x.spec=x.spec, alpha=alpha)
   } else {
     y.augmented.list = c(unname(as.data.frame(y.augmented)))
     var.lasso = mclapply(y.augmented.list, .sparseVARX,

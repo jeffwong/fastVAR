@@ -1,4 +1,4 @@
-.sparseVAR = function(j, y, p, Z, y.spec) {
+.sparseVAR = function(j, y, p, Z, y.spec, alpha) {
   colIndex = j[1]
   y.to.remove = which(!y.spec[colIndex,])
   z.to.remove = c()
@@ -13,7 +13,7 @@
     Z.reduced = Z
   }
        
-  return (cv.glmnet(Z.reduced[,-1], j[-1]))
+  return (cv.glmnet(Z.reduced[,-1], j[-1], alpha=alpha))
 }
 
 #' Sparse Vector Autoregression
@@ -32,13 +32,14 @@
 #'   If y.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
 #'   time series of y, or any of its lags.
 #' @param numcore number of cpu cores to use to parallelize this function
+#' @param alpha the elastic net mixing parameter, as defined in 'glmnet'
 #' @examples 
 #'   data(Canada)
 #'   SparseVAR(Canada, p = 3)
 #' @export
 SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
                      y.spec=matrix(1,nrow=ncol(y),ncol=ncol(y)),
-                     numcore=1, ...) {
+                     numcore=1, alpha = 0.8, ...) {
   if (p < 1) stop("p must be a positive integer")
   if (!is.matrix(y)) {
     stop("y must be a matrix (not a data frame).  Consider using as.matrix(y)")
@@ -50,7 +51,7 @@ SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
 
   if (numcore == 1) {
     var.lasso = apply(y.augmented, 2, .sparseVAR, y=y,p=p,
-                      Z=Z, y.spec=y.spec)
+                      Z=Z, y.spec=y.spec, alpha=alpha)
   } else {
     y.augmented.list = c(unname(as.data.frame(y.augmented)))
     var.lasso = mclapply(y.augmented.list, .sparseVAR, y=y,p=p,
