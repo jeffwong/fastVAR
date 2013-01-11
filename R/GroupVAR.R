@@ -20,12 +20,13 @@
 #'   Better predictions might come from weighting observations far in the past
 #'   less so they impact the objective value less.  Either NULL,
 #'   "exponential", or "linear"
+#' @param alpha the elastic net mixing parameter, as defined in 'glmnet'
 #' @param getdiag logical.  If true, return diagnostics
 #' @examples
 #'   data(Canada)
 #'   GroupVAR(Canada, p = 3)
 #' @export
-GroupVAR = function(y, freq = rep(NA,ncol(y)), p=1, weights=NULL, getdiag=T) {
+GroupVAR = function(y, freq = rep(NA,ncol(y)), p=1, weights=NULL, alpha = 0.4, getdiag=T) {
   if (p < 1) {
     stop("p must be a positive integer")
   }
@@ -38,7 +39,7 @@ GroupVAR = function(y, freq = rep(NA,ncol(y)), p=1, weights=NULL, getdiag=T) {
                        linear = linearWeights(var.z$Z, var.z$y.p)
                       )
   }
-  model = cv.glmnet(var.z$Z[,-1], var.z$y.p, family = "mgaussian", weights = weights)
+  model = cv.glmnet(var.z$Z[,-1], var.z$y.p, family = "mgaussian", weights = weights, alpha = alpha)
   result = structure(list(model = model,
                           var.z = var.z,
                           seasons = y.seasons),
