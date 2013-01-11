@@ -6,6 +6,9 @@
 #' matrix Y.  This is because observations in Y are modeled by the
 #' max(p,b) previous values, so the first max(p,b) observations cannot be modeled.
 #' @param y A matrix of endogenous variables where each column represents an individual time series
+#' @param freq only used if the time series are periodic.  freq is a vector of
+#'   frequencies for each of the time series, as in 'ts(y, freq = ...)'.
+#'   If the time series are not periodic, then this vector can be a vector of NA
 #' @param x A matrix of exogenous variables where each column represents an individual time series
 #' @param p the number of lags of Y to include in the design matrix
 #' @param b the number of lags to X include in the design matrix
@@ -70,7 +73,8 @@ VARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NUL
 #' @param ... if VAR was fit using a l2 penalty, the user can specify a different
 #'   l2 penalty here and have the coefficients recomputed
 #' @return The coefficients for the VARX model
-#' @export
+#' @method coef fastVAR.VARX
+#' @S3method coef fastVAR.VARX
 coef.fastVAR.VARX = function(VARX, ...) {
   coef(VARX$model, ...)
 }
@@ -89,8 +93,18 @@ coef.fastVAR.VARX = function(VARX, ...) {
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
 #'   predict(VARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
-#' @export
+#' @method predict fastVAR.VARX
+#' @S3method predict fastVAR.VARX
 predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
+  freq = VARX$seasons$freq
+  freq.indices = which(!is.na(VARX$seasons$freq))
+  if (missing(xnew)) {
+    if (length(freq.indices) > 0)
+      return (VARX$var.z$Z %*% coef(VARX) +
+              VARX$seasons$seasonal[-(1:VARX$var.z$p),])
+    else
+      return (VARX$var.z$Z %*% coef(VARX))
+  }
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VARX$var.z$y.orig))
   colnames(y.pred) = colnames(VARX$var.z$y.orig)
@@ -121,8 +135,6 @@ predict.fastVAR.VARX = function(VARX, xnew, n.ahead=1, threshold, ...) {
     VARX$var.z$y.orig = rbind(VARX$var.z$y.orig, y.ahead)
     VARX$var.z$x.orig = rbind(VARX$var.z$x.orig, xnew[i,])
   }
-  freq = VARX$seasons$freq
-  freq.indices = which(!is.na(VARX$seasons$freq))
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(VARX$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {

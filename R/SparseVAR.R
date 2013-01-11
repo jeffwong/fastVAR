@@ -24,6 +24,9 @@
 #' mclapply from multicore can be used to fit the individual uniresponse
 #' linear regressions in parallel.  Note that mclapply is not available for windows
 #' @param y A matrix where each column represents an individual time series
+#' @param freq only used if the time series are periodic.  freq is a vector of
+#'   frequencies for each of the time series, as in 'ts(y, freq = ...)'.
+#'   If the time series are not periodic, then this vector can be a vector of NA
 #' @param p the number of lags to include in the design matrix
 #' @param y.spec A binary matrix that can constrain the number of lagged predictor variables.  
 #'   If y.spec[i][j] = 0, the ith time series in y will not be regressed on the jth
@@ -70,7 +73,8 @@ SparseVAR = function(y, freq=rep(NA,ncol(y)), p,
 #' @param sparseVAR an object of class fastVAR.SparseVAR
 #' @param l1penalty The l1 penalty to be applied to the SparseVAR
 #'   model.
-#' @export  
+#' @method coef fastVAR.SparseVAR
+#' @S3method coef fastVAR.SparseVAR
 coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
   if (missing(l1penalty)) {
     B = data.frame(lapply(sparseVAR$model, function(model) {
@@ -104,8 +108,18 @@ coef.fastVAR.SparseVAR = function(sparseVAR, l1penalty) {
 #' @examples
 #'   data(Canada)
 #'   predict(SparseVAR(Canada, p = 3), 1)
-#' @export
-predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
+#' @method predict fastVAR.SparseVAR
+#' @S3method predict fastVAR.SparseVAR
+predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead, threshold, ...) {
+  freq = sparseVAR$seasons$freq
+  freq.indices = which(!is.na(sparseVAR$seasons$freq))
+  if (missing(n.ahead)) {
+    if (length(freq.indices) > 0)
+      return (sparseVAR$var.z$Z %*% coef(sparseVAR) +
+              sparseVAR$seasons$seasonal[-(1:sparseVAR$var.z$p),])
+    else
+      return (sparseVAR$var.z$Z %*% coef(sparseVAR))
+  }
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVAR$var.z$y.orig))
   colnames(y.pred) = colnames(sparseVAR$var.z$y.orig)
   for (i in 1:n.ahead) {
@@ -123,8 +137,6 @@ predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead=1, threshold, ...) {
     if (i == n.ahead) break
     sparseVAR$var.z$y.orig = rbind(sparseVAR$var.z$y.orig, y.ahead)
   }
-  freq = sparseVAR$seasons$freq
-  freq.indices = which(!is.na(sparseVAR$seasons$freq))
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(sparseVAR$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {

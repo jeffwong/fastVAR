@@ -34,6 +34,9 @@
 #' mclapply from multicore can be used to fit the individual uniresponse
 #' linear regressions in parallel.  Note that mclapply is not available for windows
 #' @param y A matrix of endogenous variables where each column represents an individual time series
+#' @param freq only used if the time series are periodic.  freq is a vector of
+#'   frequencies for each of the time series, as in 'ts(y, freq = ...)'.
+#'   If the time series are not periodic, then this vector can be a vector of NA
 #' @param x A matrix of exogenous variables where each column represents an individual time series
 #' @param p the number of lags of Y to include in the design matrix
 #' @param b the number of lags to X include in the design matrix
@@ -94,7 +97,9 @@ SparseVARX = function(y, freq=rep(NA,ncol(y)), x, p, b,
 #' l1 penalty and will return the coefficients
 #' @param sparseVARX an object of class fastVAR.SparseVARX
 #' @param l1penalty The l1 penalty to be applied to the SparseVARX
-#'   model.  
+#'   model. 
+#' @method coef fastVAR.SparseVARX
+#' @S3method coef fastVAR.SparseVARX
 coef.fastVAR.SparseVARX = function(sparseVARX, l1penalty) {
   if (missing(l1penalty)) {
     B = data.frame(lapply(sparseVARX$model, function(model) {
@@ -131,8 +136,18 @@ coef.fastVAR.SparseVARX = function(sparseVARX, l1penalty) {
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
 #'   predict(SparseVARX(Canada, x = x, p = 3, b = 2), xnew=matrix(rnorm(2*4),2,4), n.ahead=2)
-#' @export
+#' @method predict fastVAR.SparseVARX
+#' @S3method predict fastVAR.SparseVARX
 predict.fastVAR.SparseVARX = function(sparseVARX, xnew, n.ahead=1, threshold, ...) {
+  freq = sparseVARX$seasons$freq
+  freq.indices = which(!is.na(sparseVARX$seasons$freq))
+  if (missing(xnew)) {
+    if (length(freq.indices) > 0)
+      return (sparseVARX$var.z$Z %*% coef(sparseVARX) +
+              sparseVARX$seasons$seasonal[-(1:sparseVARX$var.z$p),])
+    else
+      return (sparseVARX$var.z$Z %*% coef(sparseVARX))
+  }
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVARX$var.z$y.orig))
   colnames(y.pred) = colnames(sparseVARX$var.z$y.orig)
@@ -161,8 +176,6 @@ predict.fastVAR.SparseVARX = function(sparseVARX, xnew, n.ahead=1, threshold, ..
     sparseVARX$var.z$y.orig = rbind(sparseVARX$var.z$y.orig, y.ahead)
     sparseVARX$var.z$x.orig = rbind(sparseVARX$var.z$x.orig, xnew[1,])
   }
-  freq = sparseVARX$seasons$freq
-  freq.indices = which(!is.na(sparseVARX$seasons$freq))
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(sparseVARX$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
