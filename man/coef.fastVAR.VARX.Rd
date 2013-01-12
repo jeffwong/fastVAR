@@ -2,7 +2,7 @@
 \alias{coef.fastVAR.VARX}
 \title{VARX Coefficients}
 \usage{
-  coef.fastVAR.VARX(VARX, ...)
+  \method{coef}{fastVAR.VARX} (VARX, ...)
 }
 \arguments{
   \item{VARX}{an object of class fastVAR.VARX}

@@ -2,8 +2,8 @@
 \alias{predict.fastVAR.SparseVARX}
 \title{SparseVARX Predict}
 \usage{
-  predict.fastVAR.SparseVARX(sparseVARX, xnew, n.ahead = 1,
-    threshold, ...)
+  \method{predict}{fastVAR.SparseVARX} (sparseVARX, xnew,
+    n.ahead = 1, threshold, ...)
 }
 \arguments{
   \item{sparseVARX}{an object of class fastVAR.SparseVARX

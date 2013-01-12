@@ -2,7 +2,7 @@
 \alias{predict.fastVAR.SparseVAR}
 \title{SparseVAR Predict}
 \usage{
-  predict.fastVAR.SparseVAR(sparseVAR, n.ahead = 1,
+  \method{predict}{fastVAR.SparseVAR} (sparseVAR, n.ahead,
     threshold, ...)
 }
 \arguments{

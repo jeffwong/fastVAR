@@ -2,7 +2,7 @@
 \alias{coef.fastVAR.VAR}
 \title{VAR Coefficients}
 \usage{
-  coef.fastVAR.VAR(VAR, ...)
+  \method{coef}{fastVAR.VAR} (VAR, ...)
 }
 \arguments{
   \item{VAR}{an object of class fastVAR.VAR}

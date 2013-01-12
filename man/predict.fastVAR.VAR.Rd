@@ -2,7 +2,8 @@
 \alias{predict.fastVAR.VAR}
 \title{VAR Predict}
 \usage{
-  predict.fastVAR.VAR(VAR, n.ahead = 1, threshold, ...)
+  \method{predict}{fastVAR.VAR} (VAR, n.ahead, threshold,
+    ...)
 }
 \arguments{
   \item{VAR}{an object of class fastVAR.VAR returned from

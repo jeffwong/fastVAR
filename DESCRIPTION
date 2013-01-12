@@ -35,3 +35,5 @@ Collate:
     'RcppExports.R'
     'fastMlm.R'
     'utils.R'
+    'GroupVAR.R'
+    'GroupVARX.R'

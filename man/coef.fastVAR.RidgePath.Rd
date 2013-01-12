@@ -2,7 +2,7 @@
 \alias{coef.fastVAR.RidgePath}
 \title{Ridge Coefficients}
 \usage{
-  coef.fastVAR.RidgePath(model, l2penalty)
+  \method{coef}{fastVAR.RidgePath} (model, l2penalty)
 }
 \arguments{
   \item{ridgePath}{an object of class fastVAR.RidgePath}

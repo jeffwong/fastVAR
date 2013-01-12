@@ -2,7 +2,7 @@
 \alias{coef.fastVAR.SparseVAR}
 \title{Coefficients of a SparseVAR model}
 \usage{
-  coef.fastVAR.SparseVAR(sparseVAR, l1penalty)
+  \method{coef}{fastVAR.SparseVAR} (sparseVAR, l1penalty)
 }
 \arguments{
   \item{sparseVAR}{an object of class fastVAR.SparseVAR}

@@ -2,8 +2,8 @@
 \alias{predict.fastVAR.VARX}
 \title{VARX Predict}
 \usage{
-  predict.fastVAR.VARX(VARX, xnew, n.ahead = 1, threshold,
-    ...)
+  \method{predict}{fastVAR.VARX} (VARX, xnew, n.ahead = 1,
+    threshold, ...)
 }
 \arguments{
   \item{VARX}{an object of class fastVAR.VARX returned from
