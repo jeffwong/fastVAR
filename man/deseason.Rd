@@ -2,7 +2,7 @@
 \alias{deseason}
 \title{Deseason}
 \usage{
-  deseason(mts, frequency = NA, auto = F)
+  deseason(mts, frequency = rep(NA, ncol(mts)), auto = F)
 }
 \arguments{
   \item{mts}{either a vector representing 1 time series or

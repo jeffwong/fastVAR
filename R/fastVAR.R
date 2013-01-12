@@ -6,6 +6,9 @@
 #' matrix Y.  This is because observations in Y are modeled by the
 #' p previous values, so the first p observations cannot be modeled.
 #' @param y A matrix where each column represents an individual time series
+#' @param freq only used if the time series are periodic.  freq is a vector of
+#'   frequencies for each of the time series, as in 'ts(y, freq = ...)'.
+#'   If the time series are not periodic, then this vector can be a vector of NA
 #' @param p the number of lags to include in the design matrix
 #' @param intercept logical.  If true, include an intercept term in the model
 #' @param weights weights applied to the multiresponse linear regression.
@@ -18,6 +21,7 @@
 #' @examples
 #'   data(Canada)
 #'   VAR(Canada, p = 3, intercept = F)
+#' @useDynLib fastVAR
 #' @export
 VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2penalty=NULL, getdiag=T) {
   if (p < 1) {
@@ -48,7 +52,8 @@ VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2pe
     #Compute full path ridge solution
     ridge.coef = ridgePath(var.z$y.p, var.z$Z, weights)
     result = structure(list(
-                            model = structure(list(ridgePath=ridge.coef, l2penalty=l2penalty), class="fastVAR.RidgePath"),
+                            model = structure(list(ridgePath=ridge.coef, l2penalty=l2penalty),
+                                              class="fastVAR.RidgePath"),
                             var.z = var.z,
                             seasons = y.seasons),
                        class="fastVAR.VAR")
@@ -68,7 +73,8 @@ VAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, l2pe
 #' @param ... if VAR was fit using a l2 penalty, the user can specify a different
 #'   l2 penalty here and have the coefficients recomputed
 #' @return The coefficients for the VAR model
-#' @export
+#' @method coef fastVAR.VAR
+#' @S3method coef fastVAR.VAR
 coef.fastVAR.VAR = function(VAR, ...) {
   coef(VAR$model, ...)
 }
@@ -84,8 +90,17 @@ coef.fastVAR.VAR = function(VAR, ...) {
 #' @examples
 #'   data(Canada)
 #'   predict(VAR(Canada, p = 3, intercept = F), 1)
-#' @export
-predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
+#' @method predict fastVAR.VAR
+#' @S3method predict fastVAR.VAR
+predict.fastVAR.VAR = function(VAR, n.ahead, threshold, ...) {
+  freq = VAR$seasons$freq
+  freq.indices = which(!is.na(VAR$seasons$freq)) 
+  if (missing(n.ahead)) {
+    if (length(freq.indices) > 0)
+      return (VAR$var.z$Z %*% coef(VAR) + VAR$seasons$seasonal[-(1:VAR$var.z$p),])
+    else
+      return (VAR$var.z$Z %*% coef(VAR))
+  }
   y.pred = matrix(nrow=n.ahead, ncol=ncol(VAR$var.z$y.orig))
   colnames(y.pred) = colnames(VAR$var.z$y.orig)
   for (i in 1:n.ahead) {
@@ -110,8 +125,6 @@ predict.fastVAR.VAR = function(VAR, n.ahead=1, threshold, ...) {
     if (i == n.ahead) break
     VAR$var.z$y.orig = rbind(VAR$var.z$y.orig, y.ahead)
   }
-  freq = VAR$seasons$freq
-  freq.indices = which(!is.na(VAR$seasons$freq))
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(VAR$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
