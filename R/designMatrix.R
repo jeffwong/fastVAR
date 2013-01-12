@@ -6,7 +6,7 @@
 #'   time and columns represent different time series
 #' @param p the lag order of the VAR model
 #' @param intercept logical.  If true, include a 1 vector for the intercept term
-#' @return {
+#' @return
 #'  \item{n}{Number of endogenous time series that are being measured}
 #'  \item{T }{The number of time points in the reduced response matrix}
 #'  \item{k }{The total number of predictor variables used to model each endogenous time series}
@@ -16,7 +16,7 @@
 #'  \item{y.orig}{The original input matrix}
 #'  \item{p}{The lag order of the VAR model}
 #'  \item{intercept}{logical.  If true, include a 1 vector for the intercept term}
-#' }
+#' @export
 VAR.Z = function(y, p, intercept=F) {
   if(p < 1) stop("p must be a positive integer")
       
@@ -73,7 +73,7 @@ VAR.Z = function(y, p, intercept=F) {
 #' @param p the lag order of the y matrix
 #' @param b the lag order of the x matrix
 #' @param intercept logical.  If true, include a 1 vector for the intercept term
-#' @return {
+#' @return
 #'  \item{n}{Number of endogenous time series that are being measured}
 #'  \item{T }{The number of time points in the reduced response matrix}
 #'  \item{k }{The total number of predictor variables used to model each endogenous time series}
@@ -85,7 +85,7 @@ VAR.Z = function(y, p, intercept=F) {
 #'  \item{x.orig}{The original input matrix}
 #'  \item{b}{The lag order of the x matrix}
 #'  \item{intercept}{logical.  If true, include a 1 vector for the intercept term}
-#' }
+#' @export
 VARX.Z = function(y, x, p, b, intercept=F) {
   if(p < 1) stop("p must be a positive integer")
   if(is.null(colnames(y))) {
