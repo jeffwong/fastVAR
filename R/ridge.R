@@ -20,7 +20,8 @@ ridgePath = function(Y, X, weights = NULL) {
 #' the coefficients of a linear model for any l2 penalty
 #' @param ridgePath an object of class fastVAR.RidgePath
 #' @param lambda the desired l2penalty
-#' @export
+#' @method coef fastVAR.RidgePath
+#' @S3method coef fastVAR.RidgePath
 coef.fastVAR.RidgePath = function(model, l2penalty) {
   if (missing(l2penalty)) model$ridgePath(model$l2penalty)
   else model$ridgePath(l2penalty)
