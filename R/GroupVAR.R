@@ -20,7 +20,7 @@
 #'   Better predictions might come from weighting observations far in the past
 #'   less so they impact the objective value less.  Either NULL,
 #'   "exponential", or "linear"
-#' @param alpha the elastic net mixing parameter, as defined in 'glmnet'
+#' @param alpha the mixing parameter between group lasso and quadratic, as in 'glmnet'
 #' @param getdiag logical.  If true, return diagnostics
 #' @examples
 #'   data(Canada)
