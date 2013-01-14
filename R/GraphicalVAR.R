@@ -1,3 +1,4 @@
+#' @export
 GraphicalVAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=NULL, rho=0.01, getdiag=T) {
   if (p < 1) {
     stop("p must be a positive integer")
@@ -20,33 +21,48 @@ GraphicalVAR = function(y, freq = rep(NA,ncol(y)), p=1, intercept = T, weights=N
                           var.z = var.z,
                           seasons = y.seasons
                          ),
-                     class="fastVAR.GVAR")
+                     class="fastVAR.GraphicalVAR")
 
   if (getdiag) result$diag = VAR.diag(result)
 
   return (result)
 }
 
-coef.fastVAR.GVAR = function(GVAR, ...) {
-  coef(GVAR$model, ...)
+#' @method coef fastVAR.GraphicalVAR
+#' @S3method coef fastVAR.GraphicalVAR
+coef.fastVAR.GraphicalVAR = function(GraphicalVAR, ...) {
+  coef(GraphicalVAR$model, ...)
 }
 
-predict.fastVAR.GVAR = function(GVAR, n.ahead=1, threshold, ...) {
-  y.pred = matrix(nrow=n.ahead, ncol=ncol(GVAR$var.z$y.orig))
-  colnames(y.pred) = colnames(GVAR$var.z$y.orig)
+#' @method predict fastVAR.GraphicalVAR
+#' @S3method predict fastVAR.GraphicalVAR
+predict.fastVAR.GraphicalVAR = function(GraphicalVAR, n.ahead, threshold, ...) {
+  freq = GraphicalVAR$seasons$freq
+  freq.indices = which(!is.na(GraphicalVAR$seasons$freq))
+
+  if (missing(n.ahead)) {
+    if (length(freq.indices) > 0) 
+      return (GraphicalVAR$var.z$Z %*% coef(GraphicalVAR) +
+              GraphicalVAR$seasons$seasonal[-(1:GraphicalVAR$var.z$p),])
+    else
+      return (GraphicalVAR$var.z$Z %*% coef(GraphicalVAR))
+  }
+
+  y.pred = matrix(nrow=n.ahead, ncol=ncol(GraphicalVAR$var.z$y.orig))
+  colnames(y.pred) = colnames(GraphicalVAR$var.z$y.orig)
   for (i in 1:n.ahead) {
-    if (GVAR$var.z$intercept) {
-      Z.ahead = c(1,as.vector(t(GVAR$var.z$y.orig[
-        ((nrow(GVAR$var.z$y.orig)):
-        (nrow(GVAR$var.z$y.orig)-GVAR$var.z$p+1))
+    if (GraphicalVAR$var.z$intercept) {
+      Z.ahead = c(1,as.vector(t(GraphicalVAR$var.z$y.orig[
+        ((nrow(GraphicalVAR$var.z$y.orig)):
+        (nrow(GraphicalVAR$var.z$y.orig)-GraphicalVAR$var.z$p+1))
       ,])))
     } else {
-      Z.ahead = as.vector(t(GVAR$var.z$y.orig[
-        ((nrow(GVAR$var.z$y.orig)):
-        (nrow(GVAR$var.z$y.orig)-GVAR$var.z$p+1))
+      Z.ahead = as.vector(t(GraphicalVAR$var.z$y.orig[
+        ((nrow(GraphicalVAR$var.z$y.orig)):
+        (nrow(GraphicalVAR$var.z$y.orig)-GraphicalVAR$var.z$p+1))
       ,]))
     }
-    y.ahead = Z.ahead %*% coef(GVAR, ...)
+    y.ahead = Z.ahead %*% coef(GraphicalVAR, ...)
     if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
       if (length(threshold.indices) > 0)
@@ -54,14 +70,12 @@ predict.fastVAR.GVAR = function(GVAR, n.ahead=1, threshold, ...) {
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    GVAR$var.z$y.orig = rbind(GVAR$var.z$y.orig, y.ahead)
+    GraphicalVAR$var.z$y.orig = rbind(GraphicalVAR$var.z$y.orig, y.ahead)
   }
-  freq = GVAR$seasons$freq
-  freq.indices = which(!is.na(GVAR$seasons$freq))
   if (length(freq.indices) > 0) {
-    lastSeason = lastPeriod(GVAR$seasons) #returns a list
+    lastSeason = lastPeriod(GraphicalVAR$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
-      season.start = periodIndex(freq[i], nrow(GVAR$var.z$y.orig + 1))
+      season.start = periodIndex(freq[i], nrow(GraphicalVAR$var.z$y.orig + 1))
       season.end = season.start + n.ahead - 1
       rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
     })

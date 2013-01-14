@@ -1,4 +1,5 @@
-GVARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NULL, rho=0.01, getdiag=T) {
+#' @export
+GraphicalVARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NULL, rho=0.01, getdiag=T) {
   if (p < 1) stop("p must be a positive integer")
   if (missing(x)) {
     return (GVAR(y, freq, p, intercept, weights, rho, getdiag))
@@ -19,57 +20,68 @@ GVARX = function(y, freq = rep(NA,ncol(y)), x, p=1, b=1, intercept=T, weights=NU
                           model = model,
                           var.z = var.z,
                           seasons = y.seasons
-                         ), class="fastVAR.GVARX")
+                         ), class="fastVAR.GraphicalVARX")
   if (getdiag) result$diag = VAR.diag(result)
 
   return (result) 
 }
 
-#' GVARX Coefficients
+#' GraphicalVARX Coefficients
 #'
 #' @param VARX an object of class fastVAR.VARX
 #' @param ...
 #' @return The coefficients for the VARX model
 #' @export
-coef.fastVAR.GVARX = function(GVARX, ...) {
-  coef(GVARX$model, ...)
+coef.fastVAR.GraphicalVARX = function(GraphicalVARX, ...) {
+  coef(GraphicalVARX$model, ...)
 }
 
-#' GVARX Predict
+#' GraphicalVARX Predict
 #'
-#' Predict n steps ahead from a fastVAR.GVARX object
-#' @param GVARX an object of class fastVAR.GVARX returned from GVARX
+#' Predict n steps ahead from a fastVAR.GraphicalVARX object
+#' @param GraphicalVARX an object of class fastVAR.GraphicalVARX returned from GraphicalVARX
 #' @param xnew a matrix of future values for the exogenous inputs.  Should contain
 #'   n.ahead rows
 #' @param n.ahead number of steps to predict
 #' @param threshold threshold prediction values to be greater than this value
 #' @param ... extra parameters to pass into the coefficients method
-#'   for objects of type fastVAR.GVARX
+#'   for objects of type fastVAR.GraphicalVARX
 #' @examples
 #'   data(Canada)
 #'   x = matrix(rnorm(84*4), 84, 4)
-#'   predict(GVARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
+#'   predict(GraphicalVARX(Canada, x = x, p = 3, b = 2, intercept = F), xnew = matrix(rnorm(2*4),2,4), n.ahead = 2)
 #' @export
-predict.fastVAR.GVARX = function(GVARX, xnew, n.ahead=1, threshold, ...) {
+predict.fastVAR.GraphicalVARX = function(GraphicalVARX, xnew, n.ahead=1, threshold, ...) {  
+  freq = GraphicalVARX$seasons$freq
+  freq.indices = which(!is.na(GraphicalVARX$seasons$freq))
+  
+  if (missing(xnew)) {
+    if (length(freq.indices) > 0) 
+      return (GraphicalVARX$var.z$Z %*% coef(GraphicalVARX) +
+              GraphicalVARX$seasons$seasonal[-(1:GraphicalVARX$var.z$p),])
+    else
+      return (GraphicalVARX$var.z$Z %*% coef(GraphicalVARX))
+  }
+
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
-  y.pred = matrix(nrow=n.ahead, ncol=ncol(GVARX$var.z$y.orig))
-  colnames(y.pred) = colnames(GVARX$var.z$y.orig)
+  y.pred = matrix(nrow=n.ahead, ncol=ncol(GraphicalVARX$var.z$y.orig))
+  colnames(y.pred) = colnames(GraphicalVARX$var.z$y.orig)
   for (i in 1:n.ahead) {
-    Z.ahead.y = as.vector(t(GVARX$var.z$y.orig[
-      ((nrow(GVARX$var.z$y.orig)):
-      (nrow(GVARX$var.z$y.orig)-GVARX$var.z$p+1))
+    Z.ahead.y = as.vector(t(GraphicalVARX$var.z$y.orig[
+      ((nrow(GraphicalVARX$var.z$y.orig)):
+      (nrow(GraphicalVARX$var.z$y.orig)-GraphicalVARX$var.z$p+1))
     ,]))
-    if (GVARX$var.z$b == 0) {
+    if (GraphicalVARX$var.z$b == 0) {
       Z.ahead.x = xnew[i,]
     } else {
-      Z.ahead.x = as.vector(t(GVARX$var.z$x.orig[
-        ((nrow(GVARX$var.z$x.orig)):
-        (nrow(GVARX$var.z$x.orig)-GVARX$var.z$b+1))
+      Z.ahead.x = as.vector(t(GraphicalVARX$var.z$x.orig[
+        ((nrow(GraphicalVARX$var.z$x.orig)):
+        (nrow(GraphicalVARX$var.z$x.orig)-GraphicalVARX$var.z$b+1))
       ,]))
     }
-    if(GVARX$var.z$intercept) Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
+    if(GraphicalVARX$var.z$intercept) Z.ahead = c(1, Z.ahead.y, Z.ahead.x)
     else Z.ahead = c(Z.ahead.y, Z.ahead.x)
-    y.ahead = Z.ahead %*% coef(GVARX)
+    y.ahead = Z.ahead %*% coef(GraphicalVARX)
     if (!missing(threshold)) {
       threshold.indices = which(y.ahead < threshold)
       if (length(threshold.indices) > 0)
@@ -78,15 +90,13 @@ predict.fastVAR.GVARX = function(GVARX, xnew, n.ahead=1, threshold, ...) {
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    GVARX$var.z$y.orig = rbind(GVARX$var.z$y.orig, y.ahead)
-    GVARX$var.z$x.orig = rbind(GVARX$var.z$x.orig, xnew[i,])
+    GraphicalVARX$var.z$y.orig = rbind(GraphicalVARX$var.z$y.orig, y.ahead)
+    GraphicalVARX$var.z$x.orig = rbind(GraphicalVARX$var.z$x.orig, xnew[i,])
   }
-  freq = GVARX$seasons$freq
-  freq.indices = which(!is.na(GVARX$seasons$freq))
   if (length(freq.indices) > 0) {
-    lastSeason = lastPeriod(GVARX$seasons) #returns a list
+    lastSeason = lastPeriod(GraphicalVARX$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
-      season.start = periodIndex(freq[i], nrow(GVARX$var.z$y.orig + 1))
+      season.start = periodIndex(freq[i], nrow(GraphicalVARX$var.z$y.orig + 1))
       season.end = season.start + n.ahead - 1
       rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
     })

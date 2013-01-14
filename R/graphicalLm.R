@@ -1,7 +1,7 @@
 graphicalLm = function(X, Y, weights, rho) {
   if (is.null(weights)) weights = rep(1, nrow(Y))
   X = scale(scale.rows(X, sqrt(weights)), center = T, scale = F)
-  Y = scale.rows(Y, sqrt(weights))
+  Y = scale(scale.rows(Y, sqrt(weights)), center = T, scale = F)
   X.glasso = glasso(var(X) * (nrow(X) - 1), rho)
   coefficients = X.glasso$wi %*% crossprod(X, Y)
   return (structure(list(coefficients = coefficients),
