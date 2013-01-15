@@ -66,10 +66,11 @@ predict.fastVAR.GraphicalVARX = function(GraphicalVARX, xnew, n.ahead=1, thresho
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(GraphicalVARX$var.z$y.orig))
   colnames(y.pred) = colnames(GraphicalVARX$var.z$y.orig)
+  y.orig = GraphicalVARX$var.z$y.orig
   for (i in 1:n.ahead) {
-    Z.ahead.y = as.vector(t(GraphicalVARX$var.z$y.orig[
-      ((nrow(GraphicalVARX$var.z$y.orig)):
-      (nrow(GraphicalVARX$var.z$y.orig)-GraphicalVARX$var.z$p+1))
+    Z.ahead.y = as.vector(t(y.orig[
+      ((nrow(y.orig)):
+      (nrow(y.orig)-GraphicalVARX$var.z$p+1))
     ,]))
     if (GraphicalVARX$var.z$b == 0) {
       Z.ahead.x = xnew[i,]
@@ -90,13 +91,13 @@ predict.fastVAR.GraphicalVARX = function(GraphicalVARX, xnew, n.ahead=1, thresho
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    GraphicalVARX$var.z$y.orig = rbind(GraphicalVARX$var.z$y.orig, y.ahead)
+    y.orig = rbind(y.orig, y.ahead)
     GraphicalVARX$var.z$x.orig = rbind(GraphicalVARX$var.z$x.orig, xnew[i,])
   }
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(GraphicalVARX$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
-      season.start = periodIndex(freq[i], nrow(GraphicalVARX$var.z$y.orig + 1))
+      season.start = periodIndex(freq[i], nrow(GraphicalVARX$var.z$y.orig) + 1)
       season.end = season.start + n.ahead - 1
       rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
     })

@@ -97,10 +97,11 @@ predict.fastVAR.GroupVARX = function(GroupVARX, xnew, n.ahead=1, threshold, ...)
   if (nrow(xnew) != n.ahead) stop("xnew should have n.ahead rows")
   y.pred = matrix(nrow=n.ahead, ncol=ncol(GroupVARX$var.z$y.orig))
   colnames(y.pred) = colnames(GroupVARX$var.z$y.orig)
+  y.orig = GroupVARX$var.z$y.orig
   for (i in 1:n.ahead) {
-    Z.ahead.y = as.vector(t(GroupVARX$var.z$y.orig[
-      ((nrow(GroupVARX$var.z$y.orig)):
-      (nrow(GroupVARX$var.z$y.orig)-GroupVARX$var.z$p+1))
+    Z.ahead.y = as.vector(t(y.orig[
+      ((nrow(y.orig)):
+      (nrow(y.orig)-GroupVARX$var.z$p+1))
     ,]))
     if (GroupVARX$var.z$b == 0) {
       Z.ahead.x = xnew[i,]
@@ -121,13 +122,13 @@ predict.fastVAR.GroupVARX = function(GroupVARX, xnew, n.ahead=1, threshold, ...)
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    GroupVARX$var.z$y.orig = rbind(GroupVARX$var.z$y.orig, y.ahead)
+    y.orig = rbind(y.orig, y.ahead)
     GroupVARX$var.z$x.orig = rbind(GroupVARX$var.z$x.orig, xnew[i,])
   }
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(GroupVARX$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
-      season.start = periodIndex(freq[i], nrow(GroupVARX$var.z$y.orig + 1))
+      season.start = periodIndex(freq[i], nrow(GroupVARX$var.z$y.orig) + 1)
       season.end = season.start + n.ahead - 1
       rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
     })
