@@ -19,7 +19,8 @@ Depends:
     glmnet,
     RcppEigen,
     Rcpp,
-    parallel
+    parallel,
+    glasso
 LinkingTo: Rcpp, RcppEigen
 Collate:
     'SparseVAR.R'
@@ -37,3 +38,6 @@ Collate:
     'utils.R'
     'GroupVAR.R'
     'GroupVARX.R'
+    'GraphicalVAR.R'
+    'GraphicalVARX.R'
+    'graphicalLm.R'

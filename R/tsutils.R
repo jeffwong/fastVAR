@@ -105,14 +105,14 @@ lastPeriod.seasonality = function(seasonality) {
             return (NA)
         }
         n = nrow(seasonality$seasonal)
-        apply(rbind(seasonality$freq, seasonality$seasonal), 2, function(j) {
+        as.list(data.frame(apply(rbind(seasonality$freq, seasonality$seasonal), 2, function(j) {
             freq = j[1]
             j.orig = j[-1]
             if (is.na(freq)) return (NA)
             endIndex = floor(n / freq) * freq
             startIndex = endIndex - freq + 1
             j.orig[startIndex : endIndex]
-        })
+        })))
     }
     else {
         freq = seasonality$freq
@@ -141,4 +141,4 @@ findPeriod = function(x) {
     }
 }
 
-periodIndex = function(freq, i) {i %% freq}
+periodIndex = function(freq, i) {((i-1) %% freq) + 1 }
