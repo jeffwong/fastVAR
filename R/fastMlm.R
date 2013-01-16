@@ -8,7 +8,7 @@ fastMlm = function(X, Y, weights = NULL) {
 }
 
 #' @method coef fastVAR.fastMlm
-#' @S3method coef fastVAR.fastmlm
+#' @S3method coef fastVAR.fastMlm
 coef.fastVAR.fastMlm = function(fastMlm) {
     return (fastMlm$coefficients)
 }
