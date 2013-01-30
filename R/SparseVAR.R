@@ -123,10 +123,11 @@ predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead, threshold, ...) {
   }
   y.pred = matrix(nrow=n.ahead, ncol=ncol(sparseVAR$var.z$y.orig))
   colnames(y.pred) = colnames(sparseVAR$var.z$y.orig)
+  y.orig = sparseVAR$var.z$y.orig
   for (i in 1:n.ahead) {
-    Z.ahead = c(1,as.vector(t(sparseVAR$var.z$y.orig[
-        ((nrow(sparseVAR$var.z$y.orig)):
-        (nrow(sparseVAR$var.z$y.orig)-sparseVAR$var.z$p+1))
+    Z.ahead = c(1,as.vector(t(y.orig[
+        ((nrow(y.orig)):
+        (nrow(y.orig)-sparseVAR$var.z$p+1))
       ,])))
     y.ahead = Z.ahead %*% coef(sparseVAR, ...)
     if (!missing(threshold)) {
@@ -136,12 +137,12 @@ predict.fastVAR.SparseVAR = function(sparseVAR, n.ahead, threshold, ...) {
     }
     y.pred[i,] = y.ahead
     if (i == n.ahead) break
-    sparseVAR$var.z$y.orig = rbind(sparseVAR$var.z$y.orig, y.ahead)
+    y.orig = rbind(y.orig, y.ahead)
   }
   if (length(freq.indices) > 0) {
     lastSeason = lastPeriod(sparseVAR$seasons) #returns a list
     y.pred.seasonal = sapply(freq.indices, function(i) {
-      season.start = periodIndex(freq[i], nrow(sparseVAR$var.z$y.orig + 1))
+      season.start = periodIndex(freq[i], nrow(sparseVAR$var.z$y.orig) + 1)
       season.end = season.start + n.ahead - 1
       rep(lastSeason[[i]], ceiling(n.ahead / freq[i]))[season.start : season.end]
     })
