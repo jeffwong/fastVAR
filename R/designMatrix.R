@@ -102,7 +102,7 @@ VARX.Z = function(y, x, p, b, intercept=F) {
   ny = ncol(y)
   nx = ncol(x)
   T = nrow(y)
-  k = ny*p + nx*b
+  k = ny*p + nx*(b+1)
   if(intercept) k = k+1
   p.max = max(p,b)
   dof = T - p.max - k
@@ -120,13 +120,13 @@ VARX.Z = function(y, x, p, b, intercept=F) {
   if(b == 0) {
     Z.b = x[(1+p):T,]
   } else {
-    Z.b = do.call('cbind', (sapply(0:(b-1), function(k) {
-      x[(p.max-k):(T-1-k),]
+    Z.b = do.call('cbind', (sapply(0:b, function(k) {
+      x[(p.max-k+1):(T-k),]
     }, simplify=F)))
     Z.b.names = colnames(Z.b)
-    colnames(Z.b) = sapply(1:b, function(i) {
-      startIndex = (i-1)*nx + 1
-      endIndex = i*nx
+    colnames(Z.b) = sapply(0:b, function(i) {
+      startIndex = i*nx + 1
+      endIndex = startIndex+nx-1
       paste(Z.b.names[startIndex:endIndex], '.l', i, sep='')
     })
   }
